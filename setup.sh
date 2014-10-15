@@ -124,4 +124,9 @@ if ! has_application puppet ; then
   fi
 fi
 
+if [[ ! -z "$(gem list --local | grep librarian-puppet)" ]] ; then
+  echo "Installing librarian for puppet"
+  $NOOP sudo gem install --quiet --no-document librarian-puppet
+fi
+
 # }}}
