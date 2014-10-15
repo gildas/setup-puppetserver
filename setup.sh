@@ -164,7 +164,7 @@ if [[ -z "$(gem list --local | grep librarian-puppet)" ]] ; then
   echo "Installing librarian for puppet"
   $NOOP sudo gem install --quiet --no-document librarian-puppet
 
-  echo "First run of librarian"
+  echo "First run of librarian (This can some time...)"
   $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
 fi
 # }}}
