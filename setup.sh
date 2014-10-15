@@ -47,41 +47,14 @@ function has_application() # {{{
   command -v "$@" > /dev/null 2>&1
 } # }}}
 
-function parse_args() # {{{
-{
-  flags=()
-
-  while (( $# > 0 ))
-  do
-    arg="$1"
-    shift
-    case "$arg" in
-      (--trace)
-        set -o trace
-	TRACE=1
-	flags+=( "$arg" )
-	;;
-      (--noop)
-        export NOOP=:
-        ;;
-      (--debug)
-        export DEBUG=1
-        flags+=( "$arg" )
-        ;;
-      (--quiet)
-        export VERBOSE=0
-        flags+=( "$arg" )
-        ;;
-      (--verbose)
-        export VERBOSE=1
-        flags+=( "$arg" )
-        ;;
-    esac
-  done
-} # }}}
-
 # Main {{{
 parse_args "$@"
+
+hostname=${1:-puppet}
+
+echo "new hostname: $hostname"
+
+exit 0
 
 [[ ! -z "$NOOP" ]] && echo "Running in dry mode (no command will be executed)"
 
@@ -93,27 +66,24 @@ debug "Done\n"
 echo "Running on $NAME release $VERSION"
 echo "To install software and configure your system, you need to be a sudoer and will have to enter your password once during this script."
 
-if prompt "The server hostname is: $(hostname), do you want to change it? [yn] " ; then
-  read -p "Enter the new hostname without its ip domain [$(hostname)]: " value
-  if [[ ! -z "$value" ]] ; then
-    echo "Updating server hostname to: $value"
-    $NOOP echo "$value" | sudo tee /etc/hostname > /dev/null
-    if [ "$ID" == "centos" ] ; then
-      if [ "$VERSION_ID" == "7" ] ; then
-        for config in /etc/sysconfig/network-scripts/ifcfg-* ; do
-          interface="$(basename $config | cut --delimiter=- --fields=2)"
-          if [ ! -z "$(grep 'BOOTPROTO="dhcp"' $config)" ] ; then
-            echo "Configuring interface $interface"
-            if [ -z "$(grep DHCP_HOSTNAME $config)" ] ; then
-              $NOOP echo "DHCP_HOSTNAME=\"$value\"" | sudo tee --append $config > /dev/null
-            else
-              $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$value\"/" $config
-            fi
+if [[ "$(hostname)" != "$hostname" ]] ; then
+  echo "Updating server hostname to: $hostname"
+  $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
+  if [ "$ID" == "centos" ] ; then
+    if [ "$VERSION_ID" == "7" ] ; then
+      for interface_config in /etc/sysconfig/network-scripts/ifcfg-* ; do
+        interface="$(basename $interface_config | cut --delimiter=- --fields=2)"
+        if [ ! -z "$(grep 'BOOTPROTO="dhcp"' $interface_config)" ] ; then
+          echo "Configuring interface $interface"
+          if [ -z "$(grep DHCP_HOSTNAME $interface_config)" ] ; then
+            $NOOP echo "DHCP_HOSTNAME=\"$hostname\"" | sudo tee --append $interface_config > /dev/null
+          else
+            $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$hostname\"/" $interface_config
           fi
-        done
-        echo "Restarting network"
-        $NOOP sudo systemctl restart network
-      fi
+        fi
+      done
+      echo "Restarting network"
+      $NOOP sudo systemctl restart network
     fi
   fi
 fi
