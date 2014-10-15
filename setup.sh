@@ -141,16 +141,18 @@ if [[ ! -d /etc/puppet/.git ]] ; then
   $NOOP sudo rm -rf /etc/puppet /etc/hiera.yaml
   $NOOP sudo git clone http://github.com/gildas/setup-puppetserver.git /etc/puppet
   $NOOP sudo ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
+else
+  $NOOP sudo sh -c "cd /etc/puppet && git pull"
 fi
 
-[[ -d /var/lib/puppet/ssl ]] || $NOOP sudo mkdir -p /var/lib/puppet/ssl
-$NOOP sudo chown -R puppet:puppet /var/lib/puppet/client* /var/lib/puppet/lib /var/lib/puppet/ssl
+#[[ -d /var/lib/puppet/ssl ]] || $NOOP sudo mkdir -p /var/lib/puppet/ssl
+#$NOOP sudo chown -R puppet:puppet /var/lib/puppet/client* /var/lib/puppet/lib /var/lib/puppet/ssl
 
 if [[ ! -z "$(gem list --local | grep librarian-puppet)" ]] ; then
   echo "Installing librarian for puppet"
   $NOOP sudo gem install --quiet --no-document librarian-puppet
 
   echo "First run of librarian"
-  $NOOP sudo /usr/bin/librarian-puppet update --verbose 2>&1 | sudo tee -a /var/log/librarian.log > /dev/null
+  $NOOP sudo sh -c "cd /etc/puppet && /usr/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/librarian.log > /dev/null"
 fi
 # }}}
