@@ -100,4 +100,14 @@ if [[ "$(hostname)" != "$hostname" ]] ; then
     fi
   fi
 fi
+
+if ! has_application git ; then
+  echo "Installing git"
+  if [ "$ID" == "centos" ] ; then
+    $NOOP sudo yum install -y git
+  elif [ "$ID" == "ubuntu" ] ; then
+    $NOOP sudo apt-get install git
+  fi
+fi
+
 # }}}
