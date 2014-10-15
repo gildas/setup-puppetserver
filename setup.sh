@@ -124,10 +124,12 @@ fi
 
 if [ "$ID" == "centos" ] ; then
   if [ -z "$(rpm -qa | grep rubygems)" ] ; them
+    echo "Installing rubygems"
     $NOOP sudo yum install -y rubygems
   fi
 elif [ "$ID" == "ubuntu" ] ; then
   if [ -z "$(dpkg --show --showformat='${Status}' rubygems)" ] ; then
+    echo "Installing rubygems"
     $NOOP sudo apt-get install rubygems
   fi
 fi
