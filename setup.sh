@@ -139,7 +139,7 @@ fi
 if [[ ! -d /etc/puppet/.git ]] ; then
   echo "Cloning puppet configuration"
   $NOOP sudo rm -rf /etc/puppet /etc/hiera.yaml
-  $NOOP sudo git clone http://github.com/gildas/setup-puppetserver.git /etc/puppet
+  $NOOP sudo git clone http://github.com/gildas/config-puppetserver.git /etc/puppet
   $NOOP sudo ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
 else
   $NOOP sudo sh -c "cd /etc/puppet && git pull"
