@@ -123,7 +123,7 @@ if ! has_application git ; then
 fi
 
 if [ "$ID" == "centos" ] ; then
-  if [ -z "$(rpm -qa | grep rubygems)" ] ; them
+  if [ -z "$(rpm -qa | grep rubygems)" ] ; then
     echo "Installing rubygems"
     $NOOP sudo yum install -y rubygems
   fi
