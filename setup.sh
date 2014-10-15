@@ -79,6 +79,18 @@ else
   exit 1
 fi
 
+if [ "$ID" == 'centos' ] ; then
+  if [[ ! -z "$(sestatus | grep -i 'Current mode:.*enforcing')" ]] ; then
+    echo "Disabling runtime SELinux"
+    $NOOP sudo setenforce 0
+  fi
+
+  if [[ ! -z "$(sestatus | grep -i 'Mode from config file:.*enforcing')" ]] ; then
+    echo "Disabling SELinux at boot time"
+    $NOOP sudo sed -i "/^\s*SELINUX=/s/.*/SELINUX=permissive/" /etc/selinux/config
+  fi
+fi
+
 if [[ "$(hostname)" != "$hostname" ]] ; then
   echo "Updating server hostname to: $hostname"
   $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
