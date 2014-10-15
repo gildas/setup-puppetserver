@@ -122,6 +122,16 @@ if ! has_application git ; then
   fi
 fi
 
+if [ "$ID" == "centos" ] ; then
+  if [ -z "$(rpm -qa | grep rubygems)" ] ; them
+    $NOOP sudo yum install -y rubygems
+  fi
+elif [ "$ID" == "ubuntu" ] ; then
+  if [ -z "$(dpkg --show --showformat='${Status}' rubygems)" ] ; then
+    $NOOP sudo apt-get install rubygems
+  fi
+fi
+
 if ! has_application puppet ; then
   echo "Installing puppet"
   if [ "$ID" == "centos" ] ; then
@@ -130,9 +140,9 @@ if ! has_application puppet ; then
     elif [ "$VERSION_ID" == "6" ] ; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm
     fi
-    $NOOP sudo yum install -y puppet-server rubygems
+    $NOOP sudo yum install -y puppet-server
   elif [ "$ID" == "ubuntu" ] ; then
-    $NOOP sudo apt-get install puppet-server rubygems
+    $NOOP sudo apt-get install puppet-server
   fi
 fi
 
