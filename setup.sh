@@ -134,11 +134,18 @@ if ! has_application puppet ; then
   elif [ "$ID" == "ubuntu" ] ; then
     $NOOP sudo apt-get install puppet-server rubygems
   fi
+
+  echo "Cloning puppet configuration"
+  $NOOP sudo rm -rf /etc/puppet /etc/hiera.yaml
+  $NOOP sudo git clone http://github.com/gildas/setup-puppetserver.git /etc/puppet
+  $NOOP sudo ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
+
+  $NOOP sudo mkdir -p /var/lib/puppet/ssl
+  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/client* /var/lib/puppet/lib /var/lib/puppet/ssl
 fi
 
 if [[ ! -z "$(gem list --local | grep librarian-puppet)" ]] ; then
   echo "Installing librarian for puppet"
   $NOOP sudo gem install --quiet --no-document librarian-puppet
 fi
-
 # }}}
