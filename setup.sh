@@ -47,6 +47,96 @@ function has_application() # {{{
   command -v "$@" > /dev/null 2>&1
 } # }}}
 
+function is_service_enabled() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      systemctl -q is-enabled $1
+    else
+      return 1
+    fi
+  elif [ "$ID" != 'ubuntu' ] ; then
+      return 1
+  else
+    return 1
+  fi
+} # }}}
+
+function service_enable() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      sudo systemctl -q enable $1
+    else
+      return 1
+    fi
+  elif [ "$ID" != 'ubuntu' ] ; then
+      return 1
+  else
+    return 1
+  fi
+} # }}}
+
+function service_disable() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      sudo systemctl -q disable $1
+    else
+      return 1
+    fi
+  elif [ "$ID" != 'ubuntu' ] ; then
+      return 1
+  else
+    return 1
+  fi
+} # }}}
+
+function is_service_running() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      systemctl -q is-active $1
+    else
+      return 1
+    fi
+  elif [ "$ID" != 'ubuntu' ] ; then
+      return 1
+  else
+    return 1
+  fi
+} # }}}
+
+function service_start() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      sudo systemctl -q start $1
+    else
+      return 1
+    fi
+  elif [ "$ID" != 'ubuntu' ] ; then
+      return 1
+  else
+    return 1
+  fi
+} # }}}
+
+function service_stop() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      sudo systemctl -q stop $1
+    else
+      return 1
+    fi
+  elif [ "$ID" != 'ubuntu' ] ; then
+      return 1
+  else
+    return 1
+  fi
+} # }}}
+
 # Main {{{
 hostname=${1:-puppet}
 
@@ -166,5 +256,13 @@ if [[ -z "$(gem list --local | grep librarian-puppet)" ]] ; then
 
   echo "First run of librarian (This can some time...)"
   $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
+fi
+
+if ! is_service_enabled puppetmaster ; then
+  service_enable puppetmaster
+fi
+
+if ! is_service_running puppetmaster ; then
+  service_start puppetmaster
 fi
 # }}}
