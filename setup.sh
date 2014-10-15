@@ -48,13 +48,7 @@ function has_application() # {{{
 } # }}}
 
 # Main {{{
-parse_args "$@"
-
 hostname=${1:-puppet}
-
-echo "new hostname: $hostname"
-
-exit 0
 
 [[ ! -z "$NOOP" ]] && echo "Running in dry mode (no command will be executed)"
 
