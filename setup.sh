@@ -149,5 +149,8 @@ $NOOP sudo chown -R puppet:puppet /var/lib/puppet/client* /var/lib/puppet/lib /v
 if [[ ! -z "$(gem list --local | grep librarian-puppet)" ]] ; then
   echo "Installing librarian for puppet"
   $NOOP sudo gem install --quiet --no-document librarian-puppet
+
+  echo "First run of librarian"
+  $NOOP sudo /usr/bin/librarian-puppet update --verbose 2>&1 | sudo tee -a /var/log/librarian.log > /dev/null
 fi
 # }}}
