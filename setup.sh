@@ -259,10 +259,12 @@ if [[ -z "$(gem list --local | grep librarian-puppet)" ]] ; then
 fi
 
 if ! is_service_enabled puppetmaster ; then
+  echo "Enabling puppet master service"
   service_enable puppetmaster
 fi
 
 if ! is_service_running puppetmaster ; then
+  echo "Starting puppet master service"
   service_start puppetmaster
 fi
 # }}}
