@@ -184,6 +184,7 @@ fi
 if [[ "$(hostname)" != "$hostname" ]] ; then
   echo "Updating server hostname to: $hostname"
   $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
+  $NOOP sed -i "/^\s*127\.0\.0\.1/s/$/ ${hostname}" /etc/hosts
   if [ "$ID" == "centos" ] ; then
     if [ "$VERSION_ID" == "7" ] ; then
       for interface_config in /etc/sysconfig/network-scripts/ifcfg-* ; do
