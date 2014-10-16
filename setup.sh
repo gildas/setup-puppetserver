@@ -268,20 +268,16 @@ if ! has_application git ; then
   fi
 fi
 
-if ! has_application gem ; then
-  if [ "$ID" == "centos" ] ; then
-    echo "Installing rubygems"
-    $NOOP sudo yum install -y rubygems
-  elif [ "$ID" == "ubuntu" ] ; then
-    echo "Installing rubygems"
-    $NOOP sudo apt-get -y install rubygems
+if [ "$ID" == "centos" ] ; then
+  if [ -z "$(rpm -qa | grep ruby)" ] ; then
+    echo "Installing Ruby"
+    $NOOP sudo yum install -y ruby
   fi
-fi
-
-compare_versions $(ruby -v | cut -d ' ' -f 2 | cut -d p -f 1) 1.9.3
-if [[ $? == 2 ]] ; then
-  echo "Your ruby is too old ($(ruby -v)), you need to run at least version 1.9.3"
-  exit 1
+elif [ "$ID" == "ubuntu" ] ; then
+  if [ -z "$(dpkg-query -W -f='{Status}' ruby2.1 | grep '\s+installed')" ] ; then
+    echo "Installing Ruby"
+    $NOOP sudo apt-get -y install ruby2.1 ruby2.1-dev
+  fi
 fi
 
 if [ "$ID" == "centos" ] ; then
