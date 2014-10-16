@@ -213,9 +213,9 @@ fi
 
 if [[ "$(hostname)" != "$hostname" ]] ; then
   echo "Updating server hostname to: $hostname"
-  $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
-  $NOOP sed -i "/^\s*127\.0\.0\.1/s/$/ ${hostname}/" /etc/hosts
   if [ "$ID" == "centos" ] ; then
+    $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
+    $NOOP sudo sed -i "/^\s*127\.0\.0\.1/s/$/ ${hostname}/" /etc/hosts
     if [ "$VERSION_ID" == "7" ] ; then
       for interface_config in /etc/sysconfig/network-scripts/ifcfg-* ; do
         interface="$(basename $interface_config | cut --delimiter=- --fields=2)"
@@ -232,12 +232,15 @@ if [[ "$(hostname)" != "$hostname" ]] ; then
       $NOOP sudo systemctl restart network
     fi
   elif [ "$ID" == "ubuntu" ] ; then
-      if [ -z "$(grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf)" ] ; then
-        echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
-	echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
-      fi
-      echo "Restarting network"
-      $NOOP sudo /etc/init.d/networking restart
+    if [ -z "$(grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf)" ] ; then
+      echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
+      echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
+    fi
+    $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/^.*$/127.0.1.1\t${hostname}/" /etc/hosts
+    $NOOP sudo hostnamectl set-hostname ${hostname}
+    echo "Restarting network"
+    $NOOP sudo service hostname restart
+    $NOOP sudo service networking restart
   fi
 fi
 
