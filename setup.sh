@@ -101,7 +101,11 @@ function is_service_running() # {{{
       return 1
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
+    if [ ! -z "$(service $1 status | grep 'is running$')" ] ; then
+      return 0
+    else
       return 1
+    fi
   else
     return 1
   fi
@@ -116,7 +120,7 @@ function service_start() # {{{
       return 1
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
-      return 1
+      sudo service $1 start
   else
     return 1
   fi
@@ -131,7 +135,7 @@ function service_stop() # {{{
       return 1
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
-      return 1
+      sudo service $1 stop
   else
     return 1
   fi
