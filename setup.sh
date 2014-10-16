@@ -204,6 +204,11 @@ if [ "$ID" == 'centos' ] ; then
   $NOOP sudo yum --assumeyes --quiet update
 elif [ "$ID" == 'ubuntu' ] ; then
   $NOOP sudo apt-get -y -qq update
+  $NOOP sudo apt-get -y -qq install apt-file
+  $NOOP sudo apt-get -y -qq install software-properties-common
+  $NOOP sudo add-apt-repository -y ppa:brightbox/ruby-ng
+  $NOOP sudo apt-get -y -qq update
+  $NOOP sudo apt-file update 2>&1 > /dev/null  &
 fi
 
 if [ "$ID" == 'centos' ] ; then
