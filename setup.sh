@@ -286,6 +286,11 @@ elif [ "$ID" == "ubuntu" ] ; then
   fi
 fi
 
+if [[ -z "$(gem list --local | grep diff-lcs)" ]] ; then
+  echo "Installing gem diff/lcs for Puppet's show_diff option"
+  $NOOP sudo gem install --quiet --no-document diff-lcs
+fi
+
 if [ "$ID" == "centos" ] ; then
   if [ -z "$(rpm -qa | grep puppet-server)" ] ; then
     echo "Installing puppet server"
