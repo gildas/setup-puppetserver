@@ -321,13 +321,9 @@ fi
 if [[ -z "$(gem list --local | grep librarian-puppet)" ]] ; then
   echo "Installing librarian for puppet"
   if [ "$ID" == "centos" ] ; then
-    if [ "$VERSION_ID" == "7" ] ; then
-      $NOOP sudo gem install --quiet --no-document librarian-puppet
-    else
-      $NOOP sudo gem install --quiet --no-rdoc --no-ri librarian-puppet
-    fi
+    $NOOP sudo gem install --quiet --no-document librarian-puppet
   elif [ "$ID" == "ubuntu" ] ; then
-    $NOOP sudo gem install --quiet --no-rdoc --no-ri librarian-puppet
+    $NOOP sudo gem install --quiet --no-document librarian-puppet
   fi
 
   echo "First run of librarian (This can some time...)"
