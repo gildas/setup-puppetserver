@@ -346,4 +346,9 @@ if ! is_service_running puppetmaster ; then
   echo "Starting puppet master service"
   service_start puppetmaster
 fi
+
+# TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
+# See: https://docs.puppetlabs.com/guides/passenger.html
+
+# TODO: Should we use jenkins too?
 # }}}
