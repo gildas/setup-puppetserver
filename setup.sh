@@ -371,7 +371,17 @@ fi
   #verbose "Adding a cron job for the puppet agent"
   #sudo puppet resource cron puppet-agent ensure=present user=root minute=30 command='/usr/bin/puppet agent --onetime --no-daemonize --splay'
 
-  # TODO: Open the firewall: puppet mater: 8140
+  # Open the firewall: ssh: 22, puppet mater: 8140, apache: 80/443, dashboard: 3000
+  verbose "Configuring the firewall"
+  if [[ $ID == 'centos' ]]; then
+    $NOOP sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent
+    $NOOP sudo firewall-cmd --reload
+  elif [[ $ID == 'ubuntu' ]]; then
+    $NOOP sudo ufw allow 22
+    $NOOP sudo ufw allow 3000
+    $NOOP sudo ufw allow 8140
+    $NOOP sudo ufw enable
+  fi
 # TODO: Should we use jenkins too?
 } # }}}
 
