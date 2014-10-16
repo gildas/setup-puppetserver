@@ -346,7 +346,7 @@ fi
 
   verbose "Downloading hiera data" 
   verbose "Warning: You must run this server inside Interactive Intelligence's network or VPN" 
-  [[ -d /var/lib/puppet/hiera ]] || $NOOP mkdir -p /var/lib/puppet/hiera 
+  [[ -d /var/lib/puppet/hiera ]] || $NOOP mkdir -p /var/lib/puppet/hiera
   if [[ -d /var/lib/puppet/hiera/.git ]]; then
     verbose "Updating hiera profiles"
     $NOOP sudo sh -c "cd /var/lib/puppet/hiera && git pull"
