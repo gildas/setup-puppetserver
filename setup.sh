@@ -303,7 +303,7 @@ if ! has_application git ; then
   if [ "$ID" == "centos" ] ; then
     $NOOP sudo yum install -y git
   elif [ "$ID" == "ubuntu" ] ; then
-    $NOOP sudo apt-get -y install git
+    $NOOP sudo apt-get -y -qq install git
   fi
 fi
 
@@ -315,7 +315,7 @@ if [ "$ID" == "centos" ] ; then
 elif [ "$ID" == "ubuntu" ] ; then
   if [ -z "$(dpkg-query -W -f='{Status}' ruby2.1 | grep '\s+installed')" ] ; then
     echo "Installing Ruby"
-    $NOOP sudo apt-get -y install ruby2.1 ruby2.1-dev
+    $NOOP sudo apt-get -y -qq install ruby2.1 ruby2.1-dev
   fi
 fi
 
@@ -345,8 +345,8 @@ elif [ "$ID" == "ubuntu" ] ; then
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-precise.deb
     fi
     $NOOP sudo apt-get -y -qq update
-    $NOOP sudo apt-get -y install puppetmaster-passenger
-    $NOOP sudo apt-get -y install puppet puppetmaster
+    $NOOP sudo apt-get -y -qq install puppetmaster-passenger
+    $NOOP sudo apt-get -y -qq install puppet puppetmaster
   fi
 fi
 
@@ -375,6 +375,11 @@ fi
 
 # TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
 # See: https://docs.puppetlabs.com/guides/passenger.html
+
+  if [[ $ID == "ubuntu" ]] ; then
+    verbose "Enabling Puppet agent"
+    $NOOP sudo puppet agent --enable
+  fi
 
 # TODO: Should we use jenkins too?
 } # }}}
