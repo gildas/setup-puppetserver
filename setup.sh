@@ -302,7 +302,7 @@ elif [ "$ID" == "ubuntu" ] ; then
     fi
     $NOOP sudo apt-get -y -qq update
     $NOOP sudo apt-get -y install puppetmaster-passenger
-    $NOOP sudo apt-get -y install puppetmaster
+    $NOOP sudo apt-get -y install puppet puppetmaster
   fi
 fi
 
