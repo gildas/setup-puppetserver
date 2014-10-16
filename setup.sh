@@ -156,7 +156,7 @@ if [ "$ID" == 'centos' ] ; then
 	  echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
     exit 1
   fi
-elif [ "$ID" != 'ubuntu' ] ; then
+elif [ "$ID" == 'ubuntu' ] ; then
   if [ "$VERSION_ID" == '14.04' ]; then
     supported=1
   else
