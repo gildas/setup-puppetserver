@@ -352,10 +352,10 @@ fi
 # TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
 # See: https://docs.puppetlabs.com/guides/passenger.html
 
-  if [[ $ID == 'ubuntu' ]] ; then
-    verbose "Enabling Puppet agent"
-    $NOOP sudo puppet agent --enable
-  fi
+  verbose "Enabling and Starting Puppet agent"
+  sudo puppet resource service puppet ensure=running enable=true
+  #verbose "Adding a cron job for the puppet agent"
+  #sudo puppet resource cron puppet-agent ensure=present user=root minute=30 command='/usr/bin/puppet agent --onetime --no-daemonize --splay'
 
   # TODO: Open the firewall: puppet mater: 8140
 # TODO: Should we use jenkins too?
