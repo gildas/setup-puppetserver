@@ -84,15 +84,19 @@ function enable_service() # {{{
     if [[ $VERSION_ID == "7" ]]; then
       if ! systemctl -q is-enabled $1 ; then
         verbose "Enabling service $1"
-        sudo systemctl -q enable $1
+        $NOOP sudo systemctl -q enable $1
       fi
     else
       error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
     fi
   elif [[ $ID == 'ubuntu' ]]; then
-      error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
-      return 1
+    if [[ ! -z $(status $1 2>&1 | grep 'Unknown job') ]]; then
+      # Old fashion System/V init service
+      $NOOP sudo update-rc.d $1 defaults
+    else
+      $NOOP sudo rm -f /etc/init/$1.conf.override
+    fi
   fi
 } # }}}
 
@@ -109,8 +113,12 @@ function disable_service() # {{{
       return 1
     fi
   elif [[ $ID == 'ubuntu' ]]; then
-    error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
-    return 1
+    if [[ ! -z $(status $1 2>&1 | grep 'Unknown job') ]]; then
+      # Old fashion System/V init service
+      $NOOP sudo update-rc.d $1 disable
+    else
+      $NOOP echo manual | sudo tee /etc/init/$1.conf.override > /dev/null
+    fi
   fi
 } # }}}
 
@@ -355,16 +363,12 @@ fi
     echo "First run of librarian (This can some time...)"
     $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
   fi
-
   $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
 
-if [[ $ID == 'centos' ]]; then
-  enable_service puppetmaster
-  start_service  puppetmaster
-fi
-
-# TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
-# See: https://docs.puppetlabs.com/guides/passenger.html
+  disable-service puppetmaster
+  enable-service  httpd
+  stop-service    puppetmaster
+  start-service   httpd
 
   verbose "Enabling and Starting Puppet agent"
   sudo puppet resource service puppet ensure=running enable=true
