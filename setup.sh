@@ -324,25 +324,35 @@ fi
   # Make sure puppet server is off for a while
   stop_service puppetmaster
 
-if [[ ! -d /etc/puppet/.git ]] ; then
-  echo "Cloning puppet configuration"
-  $NOOP sudo rm -rf /etc/puppet /etc/hiera.yaml
-  $NOOP sudo git clone http://github.com/gildas/config-puppetserver.git /etc/puppet
-  $NOOP sudo ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
-else
-  $NOOP sudo sh -c "cd /etc/puppet && git pull"
-fi
+  if [[ ! -d /etc/puppet/.git ]]; then
+    echo "Cloning puppet configuration"
+    $NOOP sudo rm -rf /etc/puppet /etc/hiera.yaml
+    $NOOP sudo git clone http://github.com/gildas/config-puppetserver.git /etc/puppet
+    $NOOP sudo ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
+    $NOOP sudo chown -R puppet:puppet /etc/puppet
+  else
+    echo "Updating puppet configuration"
+    $NOOP sudo sh -c "cd /etc/puppet && git pull"
+    $NOOP sudo chown -R puppet:puppet /etc/puppet
+  fi
 
-#[[ -d /var/lib/puppet/ssl ]] || $NOOP sudo mkdir -p /var/lib/puppet/ssl
-#$NOOP sudo chown -R puppet:puppet /var/lib/puppet/client* /var/lib/puppet/lib /var/lib/puppet/ssl
+  [[ -d /var/lib/puppet/hiera ]] || $NOOP mkdir -p /var/lib/puppet/hiera 
+  if [[ -d /var/lib/puppet/hiera/.git ]]; then
+    verbose "Updating hiera profiles"
+    $NOOP sudo sh -c "cd /var/lib/puppet/hiera && git pull"
+  else
+    verbose "Cloning hiera profiles"
+    $NOOP sudo git clone git://repo.apac.inin.com/hiera-data.git /var/lib/puppet/hiera
+  fi
+  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/hiera
 
-if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
-  echo "Installing librarian for puppet"
-  $NOOP sudo gem install --quiet --no-document librarian-puppet
+  if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
+    echo "Installing librarian for puppet"
+    $NOOP sudo gem install --quiet --no-document librarian-puppet
 
-  echo "First run of librarian (This can some time...)"
-  $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
-fi
+    echo "First run of librarian (This can some time...)"
+    $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
+  fi
 
 if [[ $ID == 'centos' ]]; then
   enable_service puppetmaster
