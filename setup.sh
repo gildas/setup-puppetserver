@@ -247,7 +247,16 @@ if ! has_application puppet ; then
     fi
     $NOOP sudo yum install -y puppet-server
   elif [ "$ID" == "ubuntu" ] ; then
-    $NOOP sudo apt-get install puppet-server
+    if [ "$VERSION_ID" == "14.04" ] ; then
+      $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-trusty.deb -o /var/cache/apt/puppetlabs-release-trusty.deb
+      $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-trusty.deb
+    elif [ "$VERSION_ID" == "12.04" ] ; then
+      $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-precise.deb -o /var/cache/apt/puppetlabs-release-precise.deb
+      $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-precise.deb
+    fi
+    $NOOP sudo apt-get-update
+    $NOOP sudo apt-get install puppetmaster-passenger
+    $NOOP sudo apt-get install puppetmaster
   fi
 fi
 
