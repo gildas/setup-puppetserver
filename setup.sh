@@ -380,7 +380,7 @@ fi
     $NOOP sudo ufw allow 22
     $NOOP sudo ufw allow 3000
     $NOOP sudo ufw allow 8140
-    $NOOP sudo ufw enable
+    $NOOP sudo ufw --force enable
   fi
 # TODO: Should we use jenkins too?
 } # }}}
