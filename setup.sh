@@ -236,11 +236,14 @@ if [[ "$(hostname)" != "$hostname" ]] ; then
       echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
       echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
     fi
-    $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/^.*$/127.0.1.1\t${hostname}/" /etc/hosts
+    # We need to keep both hostnames until services are reset or sudo breaks
+    $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/$/ ${hostname}/" /etc/hosts
     $NOOP sudo hostnamectl set-hostname ${hostname}
     echo "Restarting network"
     $NOOP sudo service hostname restart
     $NOOP sudo service networking restart
+    # Now it is safe to forget the old hostname
+    $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/^.*$/127.0.1.1\t${hostname}/" /etc/hosts
   fi
 fi
 
