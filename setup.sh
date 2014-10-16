@@ -4,7 +4,7 @@ shopt -s extglob
 set -o errtrace
 set +o noclobber
 
-#export VERBOSE=1
+export VERBOSE=1
 #export DEBUG=1
 export NOOP=
 
@@ -72,6 +72,12 @@ function has_application() # {{{
   command -v "$@" > /dev/null 2>&1
 } # }}}
 
+function install_package() # {{{
+{
+  package=$1
+  error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
+} # }}}
+
 function is_service_enabled() # {{{
 {
   if [ "$ID" == 'centos' ] ; then
@@ -87,32 +93,38 @@ function is_service_enabled() # {{{
   fi
 } # }}}
 
-function service_enable() # {{{
+function enable_service() # {{{
 {
   if [ "$ID" == 'centos' ] ; then
     if [ "$VERSION_ID" == "7" ]; then
-      sudo systemctl -q enable $1
+      if ! systemctl -q is-enabled $1 ; then
+        verbose "Enabling service $1"
+        sudo systemctl -q enable $1
+      fi
     else
+      error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
+      error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
-  else
-    return 1
   fi
 } # }}}
 
-function service_disable() # {{{
+function disable_service() # {{{
 {
   if [ "$ID" == 'centos' ] ; then
     if [ "$VERSION_ID" == "7" ]; then
-      sudo systemctl -q disable $1
+      if systemctl -q is-enabled $1 ; then
+        verbose "Disabling service $1"
+        sudo systemctl -q disable $1
+      fi
     else
+      error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
-      return 1
-  else
+    error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
     return 1
   fi
 } # }}}
@@ -123,147 +135,168 @@ function is_service_running() # {{{
     if [ "$VERSION_ID" == "7" ]; then
       systemctl -q is-active $1
     else
-      return 1
+      service $1 status 2>&1 > /dev/null
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
-    if [ ! -z "$(service $1 status | grep 'is running$')" ] ; then
-      return 0
-    else
-      return 1
-    fi
-  else
-    return 1
+    service $1 status 2>&1 > /dev/null
   fi
 } # }}}
 
-function service_start() # {{{
+function start_service() # {{{
 {
   if [ "$ID" == 'centos' ] ; then
     if [ "$VERSION_ID" == "7" ]; then
       sudo systemctl -q start $1
     else
-      return 1
+      if service $1 status 2>&1 > /dev/null ; then
+        verbose "Starting service $1"
+        sudo service $1 start
+      fi
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
+    if service $1 status 2>&1 > /dev/null ; then
+      verbose "Starting service $1"
       sudo service $1 start
-  else
-    return 1
+    fi
   fi
 } # }}}
 
-function service_stop() # {{{
+function stop_service() # {{{
 {
   if [ "$ID" == 'centos' ] ; then
     if [ "$VERSION_ID" == "7" ]; then
       sudo systemctl -q stop $1
     else
-      return 1
+      if ! service $1 status 2>&1 > /dev/null ; then
+        verbose "Stopping service $1"
+        sudo service $1 stop
+      fi
     fi
   elif [ "$ID" != 'ubuntu' ] ; then
+    if ! service $1 status 2>&1 > /dev/null ; then
+      verbose "Stopping service $1"
       sudo service $1 stop
-  else
-    return 1
+    fi
   fi
 } # }}}
 
-# Main {{{
-hostname=${1:-puppet}
-
-[[ ! -z "$NOOP" ]] && echo "Running in dry mode (no command will be executed)"
-
-# Loads the distro information
-debug "Loading distribution information..."
-source /etc/os-release
-[[ -r /etc/lsb-release ]] && source /etc/lsb-release
-debug "Done\n"
-echo "Running on $NAME release $VERSION"
-
-if [ "$ID" == 'centos' ] ; then
-  if [ "$VERSION_ID" == "7" ]; then
-    supported=1
+function validate_system() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [ "$VERSION_ID" == "7" ]; then
+      supported=1
+    else
+      echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
+      exit 1
+    fi
+  elif [ "$ID" == 'ubuntu' ] ; then
+    if [ "$VERSION_ID" == '14.04' ]; then
+      supported=1
+    else
+      echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
+      exit 1
+    fi
   else
-    echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
+    echo "We are very sorry, but we cannot complete the automatic installation as the operating system $NAME (id=$ID) is not yet supported."
     exit 1
   fi
-elif [ "$ID" == 'ubuntu' ] ; then
-  if [ "$VERSION_ID" == '14.04' ]; then
-    supported=1
-  else
-    echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
-    exit 1
-  fi
-else
-  echo "We are very sorry, but we cannot complete the automatic installation as the operating system $NAME (id=$ID) is not yet supported."
-  exit 1
-fi
+} # }}}
 
-echo "To install software and configure your system, you need to be a sudoer and will have to enter your password once during this script."
-
-echo "Updating operating system (can take a few minutes)"
-if [ "$ID" == 'centos' ] ; then
-  $NOOP sudo yum --assumeyes --quiet update
-elif [ "$ID" == 'ubuntu' ] ; then
-  $NOOP sudo apt-get -y -qq update
-  if [ -z "$(dpkg-query -W -f='{Status}' software-properties-common | grep '\s+installed')" ] ; then
-    $NOOP sudo apt-get -y -qq install software-properties-common
-  fi
-  if [ -z "$(dpkg-query -W -f='{Status}' apt-file | grep '\s+installed')" ] ; then
-    $NOOP sudo apt-get -y -qq install apt-file
-  fi
-  if [ -z "$(apt-cache policy | grep brightbox/ruby-ng)" ] ; then
-    $NOOP sudo add-apt-repository -y ppa:brightbox/ruby-ng
+function update_system() # {{{
+{
+  echo "Updating operating system (can take a few minutes)"
+  if [ "$ID" == 'centos' ] ; then
+    $NOOP sudo yum --assumeyes --quiet update
+  elif [ "$ID" == 'ubuntu' ] ; then
     $NOOP sudo apt-get -y -qq update
-    $NOOP sudo apt-file update 2>&1 > /dev/null  &
+    if [ -z "$(dpkg-query -W -f='{Status}' software-properties-common | grep '\s+installed')" ] ; then
+      $NOOP sudo apt-get -y -qq install software-properties-common
+    fi
+    if [ -z "$(dpkg-query -W -f='{Status}' apt-file | grep '\s+installed')" ] ; then
+      $NOOP sudo apt-get -y -qq install apt-file
+    fi
+    if [ -z "$(apt-cache policy | grep brightbox/ruby-ng)" ] ; then
+      $NOOP sudo add-apt-repository -y ppa:brightbox/ruby-ng
+      $NOOP sudo apt-get -y -qq update
+      $NOOP sudo apt-file update 2>&1 > /dev/null  &
+    fi
   fi
-fi
+} # }}}
 
-if [ "$ID" == 'centos' ] ; then
-  if [[ ! -z "$(sestatus | grep -i 'Current mode:.*enforcing')" ]] ; then
-    echo "Disabling runtime SELinux"
-    $NOOP sudo setenforce 0
+function disable_selinux() # {{{
+{
+  if [ "$ID" == 'centos' ] ; then
+    if [[ ! -z "$(sestatus | grep -i 'Current mode:.*enforcing')" ]] ; then
+      echo "Disabling runtime SELinux"
+      $NOOP sudo setenforce 0
+    fi
+
+    if [[ ! -z "$(sestatus | grep -i 'Mode from config file:.*enforcing')" ]] ; then
+      echo "Disabling SELinux at boot time"
+      $NOOP sudo sed -i "/^\s*SELINUX=/s/.*/SELINUX=permissive/" /etc/selinux/config
+    fi
   fi
+} # }}}
 
-  if [[ ! -z "$(sestatus | grep -i 'Mode from config file:.*enforcing')" ]] ; then
-    echo "Disabling SELinux at boot time"
-    $NOOP sudo sed -i "/^\s*SELINUX=/s/.*/SELINUX=permissive/" /etc/selinux/config
-  fi
-fi
+function set_hostname() # {{{
+{
+  hostname=$1
 
-if [[ "$(hostname)" != "$hostname" ]] ; then
-  echo "Updating server hostname to: $hostname"
-  if [ "$ID" == "centos" ] ; then
-    $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
-    $NOOP sudo sed -i "/^\s*127\.0\.0\.1/s/$/ ${hostname}/" /etc/hosts
-    if [ "$VERSION_ID" == "7" ] ; then
-      for interface_config in /etc/sysconfig/network-scripts/ifcfg-* ; do
-        interface="$(basename $interface_config | cut --delimiter=- --fields=2)"
-        if [ ! -z "$(grep 'BOOTPROTO="dhcp"' $interface_config)" ] ; then
-          echo "Configuring interface $interface"
-          if [ -z "$(grep DHCP_HOSTNAME $interface_config)" ] ; then
-            $NOOP echo "DHCP_HOSTNAME=\"$hostname\"" | sudo tee --append $interface_config > /dev/null
-          else
-            $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$hostname\"/" $interface_config
+  if [[ "$(hostname)" != "$hostname" ]] ; then
+    echo "Updating server hostname to: $hostname"
+    if [ "$ID" == "centos" ] ; then
+      $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
+      $NOOP sudo sed -i "/^\s*127\.0\.0\.1/s/$/ ${hostname}/" /etc/hosts
+      if [ "$VERSION_ID" == "7" ] ; then
+        for interface_config in /etc/sysconfig/network-scripts/ifcfg-* ; do
+          interface="$(basename $interface_config | cut --delimiter=- --fields=2)"
+          if [ ! -z "$(grep 'BOOTPROTO="dhcp"' $interface_config)" ] ; then
+            echo "Configuring interface $interface"
+            if [ -z "$(grep DHCP_HOSTNAME $interface_config)" ] ; then
+              $NOOP echo "DHCP_HOSTNAME=\"$hostname\"" | sudo tee --append $interface_config > /dev/null
+            else
+              $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$hostname\"/" $interface_config
+            fi
           fi
-        fi
-      done
+        done
+        echo "Restarting network"
+        $NOOP sudo systemctl restart network
+      fi
+    elif [ "$ID" == "ubuntu" ] ; then
+      if [ -z "$(grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf)" ] ; then
+        echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
+        echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
+      fi
+      # We need to keep both hostnames until services are reset or sudo breaks
+      $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/$/ ${hostname}/" /etc/hosts
+      $NOOP sudo hostnamectl set-hostname ${hostname}
       echo "Restarting network"
-      $NOOP sudo systemctl restart network
+      $NOOP sudo service hostname start
+      $NOOP sudo service networking restart
+      # Now it is safe to forget the old hostname
+      $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/^.*$/127.0.1.1\t${hostname}/" /etc/hosts
     fi
-  elif [ "$ID" == "ubuntu" ] ; then
-    if [ -z "$(grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf)" ] ; then
-      echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
-      echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
-    fi
-    # We need to keep both hostnames until services are reset or sudo breaks
-    $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/$/ ${hostname}/" /etc/hosts
-    $NOOP sudo hostnamectl set-hostname ${hostname}
-    echo "Restarting network"
-    $NOOP sudo service hostname start
-    $NOOP sudo service networking restart
-    # Now it is safe to forget the old hostname
-    $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/^.*$/127.0.1.1\t${hostname}/" /etc/hosts
   fi
-fi
+} # }}}
+
+function main() # {{{
+{
+  hostname=${1:-puppet}
+
+  [[ ! -z "$NOOP" ]] && echo "Running in dry mode (no command will be executed)"
+
+  # Loads the distro information
+  debug "Loading distribution information..."
+  source /etc/os-release
+  [[ -r /etc/lsb-release ]] && source /etc/lsb-release
+  debug "Done\n"
+  echo "Running on $NAME release $VERSION"
+
+  validate_system
+  echo "To install software and configure your system, you need to be a sudoer and will have to enter your password once during this script."
+  disable_selinux
+  update_system
+  set_hostname $hostname
 
 if ! has_application git ; then
   echo "Installing git"
@@ -337,18 +370,13 @@ if [[ -z "$(gem list --local | grep librarian-puppet)" ]] ; then
   $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
 fi
 
-if ! is_service_enabled puppetmaster ; then
-  echo "Enabling puppet master service"
-  service_enable puppetmaster
-fi
-
-if ! is_service_running puppetmaster ; then
-  echo "Starting puppet master service"
-  service_start puppetmaster
-fi
+  enable_service puppetmaster
+  start_service  puppetmaster
 
 # TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
 # See: https://docs.puppetlabs.com/guides/passenger.html
 
 # TODO: Should we use jenkins too?
-# }}}
+} # }}}
+
+main
