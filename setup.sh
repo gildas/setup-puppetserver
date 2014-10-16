@@ -256,13 +256,11 @@ if ! has_application git ; then
   fi
 fi
 
-if [ "$ID" == "centos" ] ; then
-  if [ -z "$(rpm -qa | grep rubygems)" ] ; then
+if ! has_application gem ; then
+  if [ "$ID" == "centos" ] ; then
     echo "Installing rubygems"
     $NOOP sudo yum install -y rubygems
-  fi
-elif [ "$ID" == "ubuntu" ] ; then
-  if [ -z "$(dpkg --status rubygems | grep '^Status: install ok installed')" ] ; then
+  elif [ "$ID" == "ubuntu" ] ; then
     echo "Installing rubygems"
     $NOOP sudo apt-get install rubygems
   fi
