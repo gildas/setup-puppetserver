@@ -148,7 +148,6 @@ source /etc/os-release
 [[ -r /etc/lsb-release ]] && source /etc/lsb-release
 debug "Done\n"
 echo "Running on $NAME release $VERSION"
-echo "To install software and configure your system, you need to be a sudoer and will have to enter your password once during this script."
 
 if [ "$ID" == 'centos' ] ; then
   if [ "$VERSION_ID" == "7" ]; then
@@ -168,6 +167,8 @@ else
   echo "We are very sorry, but we cannot complete the automatic installation as the operating system $NAME (id=$ID) is not yet supported."
   exit 1
 fi
+
+echo "To install software and configure your system, you need to be a sudoer and will have to enter your password once during this script."
 
 if [ "$ID" == 'centos' ] ; then
   if [[ ! -z "$(sestatus | grep -i 'Current mode:.*enforcing')" ]] ; then
