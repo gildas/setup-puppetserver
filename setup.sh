@@ -118,17 +118,17 @@ function start_service() # {{{
 {
   if [[ $ID == 'centos' ]]; then
     if [[ $VERSION_ID == "7" ]]; then
-      sudo systemctl -q start $1
+      $NOOP sudo systemctl -q start $1
     else
       if service $1 status 2>&1 > /dev/null ; then
         verbose "Starting service $1"
-        sudo service $1 start
+        $NOOP sudo service $1 start
       fi
     fi
   elif [[ $ID == 'ubuntu' ]]; then
     if service $1 status 2>&1 > /dev/null ; then
       verbose "Starting service $1"
-      sudo service $1 start
+      $NOOP sudo service $1 start
     fi
   fi
 } # }}}
@@ -321,6 +321,8 @@ elif [[ $ID == 'ubuntu' ]]; then
     $NOOP sudo apt-get -y -qq install puppet puppetmaster
   fi
 fi
+  # Make sure puppet server is off for a while
+  stop_service puppetmaster
 
 if [[ ! -d /etc/puppet/.git ]] ; then
   echo "Cloning puppet configuration"
