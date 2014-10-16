@@ -202,6 +202,13 @@ if [[ "$(hostname)" != "$hostname" ]] ; then
       echo "Restarting network"
       $NOOP sudo systemctl restart network
     fi
+  elif [ "$ID" == "ubuntu" ] ; then
+      if [ -z $( grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf) ] ; then
+        echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
+	echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
+      fi
+      echo "Restarting network"
+      $NOOP sudo /etc/init.d/networking restart
   fi
 fi
 
