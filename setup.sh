@@ -272,16 +272,19 @@ if [[ $? == 2 ]] ; then
   exit 1
 fi
 
-if ! has_application puppet ; then
-  echo "Installing puppet"
-  if [ "$ID" == "centos" ] ; then
+if [ "$ID" == "centos" ] ; then
+  if [ -z "$(rpm -qa | grep puppet-server)" ] ; then
+    echo "Installing puppet"
     if [ "$VERSION_ID" == "7" ] ; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
     elif [ "$VERSION_ID" == "6" ] ; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm
     fi
     $NOOP sudo yum install -y puppet-server
-  elif [ "$ID" == "ubuntu" ] ; then
+  fi
+elif [ "$ID" == "ubuntu" ] ; then
+  if [ -z "$(dpkg-query -W -f='{Status}' puppetmaster | grep '\s+installed')" ] ; then
+    echo "Installing puppet"
     if [ "$VERSION_ID" == "14.04" ] ; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-trusty.deb -o /var/cache/apt/puppetlabs-release-trusty.deb
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-trusty.deb
