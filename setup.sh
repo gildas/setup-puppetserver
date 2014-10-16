@@ -318,9 +318,9 @@ elif [[ $ID == 'ubuntu' ]]; then
     fi
     $NOOP sudo apt-get -y -qq update
     $NOOP sudo apt-get -y -qq install puppetmaster-passenger
-    $NOOP sudo apt-get -y -qq install puppet puppetmaster
   fi
 fi
+
   # Make sure puppet server is off for a while
   stop_service puppetmaster
 
@@ -344,8 +344,10 @@ if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
   $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
 fi
 
+if [[ $ID == 'centos' ]]; then
   enable_service puppetmaster
   start_service  puppetmaster
+fi
 
 # TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
 # See: https://docs.puppetlabs.com/guides/passenger.html
@@ -355,6 +357,7 @@ fi
     $NOOP sudo puppet agent --enable
   fi
 
+  # TODO: Open the firewall: puppet mater: 8140
 # TODO: Should we use jenkins too?
 } # }}}
 
