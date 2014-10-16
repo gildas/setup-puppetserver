@@ -252,7 +252,7 @@ if ! has_application git ; then
   if [ "$ID" == "centos" ] ; then
     $NOOP sudo yum install -y git
   elif [ "$ID" == "ubuntu" ] ; then
-    $NOOP sudo apt-get install git
+    $NOOP sudo apt-get -y install git
   fi
 fi
 
@@ -262,7 +262,7 @@ if ! has_application gem ; then
     $NOOP sudo yum install -y rubygems
   elif [ "$ID" == "ubuntu" ] ; then
     echo "Installing rubygems"
-    $NOOP sudo apt-get install rubygems
+    $NOOP sudo apt-get -y install rubygems
   fi
 fi
 
@@ -289,9 +289,9 @@ if ! has_application puppet ; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-precise.deb -o /var/cache/apt/puppetlabs-release-precise.deb
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-precise.deb
     fi
-    $NOOP sudo apt-get-update
-    $NOOP sudo apt-get install puppetmaster-passenger
-    $NOOP sudo apt-get install puppetmaster
+    $NOOP sudo apt-get -y update
+    $NOOP sudo apt-get -y install puppetmaster-passenger
+    $NOOP sudo apt-get -y install puppetmaster
   fi
 fi
 
