@@ -199,6 +199,13 @@ fi
 
 echo "To install software and configure your system, you need to be a sudoer and will have to enter your password once during this script."
 
+echo "Updating operating system (can take a few minutes)"
+if [ "$ID" == 'centos' ] ; then
+  $NOOP sudo yum --assumeyes --quiet update
+elif [ "$ID" == 'ubuntu' ] ; then
+  $NOOP sudo apt-get --assume-yes --quiet update
+fi
+
 if [ "$ID" == 'centos' ] ; then
   if [[ ! -z "$(sestatus | grep -i 'Current mode:.*enforcing')" ]] ; then
     echo "Disabling runtime SELinux"
