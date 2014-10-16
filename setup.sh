@@ -42,6 +42,31 @@ function prompt() # {{{
   done
 } # }}}
 
+function compare_versions () # {{{
+{
+  # Compare version numbers
+
+  # Versions are same?
+  [[ $1 == $2 ]] && return 0
+
+  local IFS=.
+  local i ver1=($1) ver2=($2)
+  # fill empty fields in ver1 with zeros
+  for ((i=${#ver1[@]}; i<${#ver2[@]}; i++)) ; do
+    ver1[i]=0
+  done
+  for ((i=0; i<${#ver1[@]}; i++)) ; do
+    # fill empty fields in ver2 with zeros
+    [[ -z ${ver2[i]} ]] && ver2[i]=0
+    # ver1 is bigger than ver2
+    [[ 10#${ver1[i]} > 10#${ver2[i]} ]] && return 1
+    # ver1 is smaller than ver2
+    [[ 10#${ver1[i]} < 10#${ver2[i]} ]] && return 2
+  done
+  # Versions are same
+  return 0
+} # }}}
+
 function has_application() # {{{
 {
   command -v "$@" > /dev/null 2>&1
@@ -235,6 +260,12 @@ elif [ "$ID" == "ubuntu" ] ; then
     echo "Installing rubygems"
     $NOOP sudo apt-get install rubygems
   fi
+fi
+
+compare_versions $(ruby -v | cut -d ' ' -f 2 | cut -d p -f 1) 1.9.3
+if [[ $? == 2 ]] ; then
+  echo "Your ruby is too old ($(ruby -v)), you need to run at least version 1.9.3"
+  exit 1
 fi
 
 if ! has_application puppet ; then
