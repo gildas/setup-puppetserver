@@ -78,25 +78,10 @@ function install_package() # {{{
   error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
 } # }}}
 
-function is_service_enabled() # {{{
-{
-  if [ "$ID" == 'centos' ] ; then
-    if [ "$VERSION_ID" == "7" ]; then
-      systemctl -q is-enabled $1
-    else
-      return 1
-    fi
-  elif [ "$ID" != 'ubuntu' ] ; then
-      return 1
-  else
-    return 1
-  fi
-} # }}}
-
 function enable_service() # {{{
 {
-  if [ "$ID" == 'centos' ] ; then
-    if [ "$VERSION_ID" == "7" ]; then
+  if [[ $ID == 'centos' ]]; then
+    if [[ $VERSION_ID == "7" ]]; then
       if ! systemctl -q is-enabled $1 ; then
         verbose "Enabling service $1"
         sudo systemctl -q enable $1
@@ -105,7 +90,7 @@ function enable_service() # {{{
       error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
     fi
-  elif [ "$ID" != 'ubuntu' ] ; then
+  elif [[ $ID == 'ubuntu' ]]; then
       error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
   fi
@@ -113,8 +98,8 @@ function enable_service() # {{{
 
 function disable_service() # {{{
 {
-  if [ "$ID" == 'centos' ] ; then
-    if [ "$VERSION_ID" == "7" ]; then
+  if [[ $ID == 'centos' ]]; then
+    if [[ $VERSION_ID == "7" ]]; then
       if systemctl -q is-enabled $1 ; then
         verbose "Disabling service $1"
         sudo systemctl -q disable $1
@@ -123,29 +108,16 @@ function disable_service() # {{{
       error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
       return 1
     fi
-  elif [ "$ID" != 'ubuntu' ] ; then
+  elif [[ $ID == 'ubuntu' ]]; then
     error "The function $FUNCNAME is not implemented yet for $ID version $VERSION_ID"
     return 1
   fi
 } # }}}
 
-function is_service_running() # {{{
-{
-  if [ "$ID" == 'centos' ] ; then
-    if [ "$VERSION_ID" == "7" ]; then
-      systemctl -q is-active $1
-    else
-      service $1 status 2>&1 > /dev/null
-    fi
-  elif [ "$ID" != 'ubuntu' ] ; then
-    service $1 status 2>&1 > /dev/null
-  fi
-} # }}}
-
 function start_service() # {{{
 {
-  if [ "$ID" == 'centos' ] ; then
-    if [ "$VERSION_ID" == "7" ]; then
+  if [[ $ID == 'centos' ]]; then
+    if [[ $VERSION_ID == "7" ]]; then
       sudo systemctl -q start $1
     else
       if service $1 status 2>&1 > /dev/null ; then
@@ -153,7 +125,7 @@ function start_service() # {{{
         sudo service $1 start
       fi
     fi
-  elif [ "$ID" != 'ubuntu' ] ; then
+  elif [[ $ID == 'ubuntu' ]]; then
     if service $1 status 2>&1 > /dev/null ; then
       verbose "Starting service $1"
       sudo service $1 start
@@ -163,7 +135,7 @@ function start_service() # {{{
 
 function stop_service() # {{{
 {
-  if [ "$ID" == 'centos' ] ; then
+  if [[ $ID == 'centos' ]]; then
     if [ "$VERSION_ID" == "7" ]; then
       sudo systemctl -q stop $1
     else
@@ -172,7 +144,7 @@ function stop_service() # {{{
         sudo service $1 stop
       fi
     fi
-  elif [ "$ID" != 'ubuntu' ] ; then
+  elif [[ $ID != 'ubuntu' ]]; then
     if ! service $1 status 2>&1 > /dev/null ; then
       verbose "Stopping service $1"
       sudo service $1 stop
@@ -182,15 +154,15 @@ function stop_service() # {{{
 
 function validate_system() # {{{
 {
-  if [ "$ID" == 'centos' ] ; then
-    if [ "$VERSION_ID" == "7" ]; then
+  if [[ $ID == 'centos' ]]; then
+    if [[ $VERSION_ID == "7" ]]; then
       supported=1
     else
       echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
       exit 1
     fi
-  elif [ "$ID" == 'ubuntu' ] ; then
-    if [ "$VERSION_ID" == '14.04' ]; then
+  elif [[ $ID == 'ubuntu' ]]; then
+    if [[ $VERSION_ID == '14.04' ]]; then
       supported=1
     else
       echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
@@ -205,33 +177,33 @@ function validate_system() # {{{
 function update_system() # {{{
 {
   echo "Updating operating system (can take a few minutes)"
-  if [ "$ID" == 'centos' ] ; then
+  if [[ $ID == 'centos' ]]; then
     $NOOP sudo yum --assumeyes --quiet update
-  elif [ "$ID" == 'ubuntu' ] ; then
+  elif [[ $ID == 'ubuntu' ]]; then
     $NOOP sudo apt-get -y -qq update
-    if [ -z "$(dpkg-query -W -f='{Status}' software-properties-common | grep '\s+installed')" ] ; then
+    if [[ -z $(dpkg-query -W -f='{Status}' software-properties-common | grep '\s+installed') ]]; then
       $NOOP sudo apt-get -y -qq install software-properties-common
     fi
-    if [ -z "$(dpkg-query -W -f='{Status}' apt-file | grep '\s+installed')" ] ; then
+    if [[ -z $(dpkg-query -W -f='{Status}' apt-file | grep '\s+installed') ]]; then
       $NOOP sudo apt-get -y -qq install apt-file
     fi
-    if [ -z "$(apt-cache policy | grep brightbox/ruby-ng)" ] ; then
+    if [[ -z $(apt-cache policy | grep brightbox/ruby-ng) ]]; then
       $NOOP sudo add-apt-repository -y ppa:brightbox/ruby-ng
       $NOOP sudo apt-get -y -qq update
-      $NOOP sudo apt-file update 2>&1 > /dev/null  &
+      $NOOP sudo apt-file update 2>&1 > /dev/null &
     fi
   fi
 } # }}}
 
 function disable_selinux() # {{{
 {
-  if [ "$ID" == 'centos' ] ; then
-    if [[ ! -z "$(sestatus | grep -i 'Current mode:.*enforcing')" ]] ; then
+  if [[ $ID == 'centos' ]]; then
+    if [[ ! -z $(sestatus | grep -i 'Current mode:.*enforcing') ]]; then
       echo "Disabling runtime SELinux"
       $NOOP sudo setenforce 0
     fi
 
-    if [[ ! -z "$(sestatus | grep -i 'Mode from config file:.*enforcing')" ]] ; then
+    if [[ ! -z $(sestatus | grep -i 'Mode from config file:.*enforcing') ]]; then
       echo "Disabling SELinux at boot time"
       $NOOP sudo sed -i "/^\s*SELINUX=/s/.*/SELINUX=permissive/" /etc/selinux/config
     fi
@@ -242,17 +214,17 @@ function set_hostname() # {{{
 {
   hostname=$1
 
-  if [[ "$(hostname)" != "$hostname" ]] ; then
+  if [[ $(hostname) != $hostname ]]; then
     echo "Updating server hostname to: $hostname"
-    if [ "$ID" == "centos" ] ; then
+    if [[ $ID == 'centos' ]]; then
       $NOOP echo "$hostname" | sudo tee /etc/hostname > /dev/null
       $NOOP sudo sed -i "/^\s*127\.0\.0\.1/s/$/ ${hostname}/" /etc/hosts
-      if [ "$VERSION_ID" == "7" ] ; then
+      if [[ $VERSION_ID == "7" ]]; then
         for interface_config in /etc/sysconfig/network-scripts/ifcfg-* ; do
           interface="$(basename $interface_config | cut --delimiter=- --fields=2)"
-          if [ ! -z "$(grep 'BOOTPROTO="dhcp"' $interface_config)" ] ; then
+          if [[ ! -z $(grep 'BOOTPROTO="dhcp"' $interface_config) ]]; then
             echo "Configuring interface $interface"
-            if [ -z "$(grep DHCP_HOSTNAME $interface_config)" ] ; then
+            if [[ -z $(grep DHCP_HOSTNAME $interface_config) ]]; then
               $NOOP echo "DHCP_HOSTNAME=\"$hostname\"" | sudo tee --append $interface_config > /dev/null
             else
               $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$hostname\"/" $interface_config
@@ -262,8 +234,8 @@ function set_hostname() # {{{
         echo "Restarting network"
         $NOOP sudo systemctl restart network
       fi
-    elif [ "$ID" == "ubuntu" ] ; then
-      if [ -z "$(grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf)" ] ; then
+    elif [[ $ID == 'ubuntu' ]]; then
+      if [[ -z $(grep '^\s*send\s*host-name\s*=\s*gethostname();$' /etc/dhcp/dhclient.conf) ]]; then
         echo "Warning: Your DHCP configuration is not set to send the hostname to the DHCP server (useful for Dynamic DNS)"
         echo "         Add the line \"send host-name = gethostname();\" to your /etc/dhcp/dhclient.conf"
       fi
@@ -283,7 +255,7 @@ function main() # {{{
 {
   hostname=${1:-puppet}
 
-  [[ ! -z "$NOOP" ]] && echo "Running in dry mode (no command will be executed)"
+  [[ ! -z $NOOP ]] && echo "Running in dry mode (no command will be executed)"
 
   # Loads the distro information
   debug "Loading distribution information..."
@@ -300,47 +272,47 @@ function main() # {{{
 
 if ! has_application git ; then
   echo "Installing git"
-  if [ "$ID" == "centos" ] ; then
+  if [[ $ID == 'centos' ]]; then
     $NOOP sudo yum install -y git
-  elif [ "$ID" == "ubuntu" ] ; then
+  elif [[ $ID == 'ubuntu' ]]; then
     $NOOP sudo apt-get -y -qq install git
   fi
 fi
 
-if [ "$ID" == "centos" ] ; then
-  if [ -z "$(rpm -qa | grep ruby)" ] ; then
+if [[ $ID == 'centos' ]]; then
+  if [[ -z $(rpm -qa | grep ruby) ]]; then
     echo "Installing Ruby"
     $NOOP sudo yum install -y ruby
   fi
-elif [ "$ID" == "ubuntu" ] ; then
-  if [ -z "$(dpkg-query -W -f='{Status}' ruby2.1 | grep '\s+installed')" ] ; then
+elif [[ $ID == 'ubuntu' ]]; then
+  if [[ -z $(dpkg-query -W -f='{Status}' ruby2.1 | grep '\s+installed') ]]; then
     echo "Installing Ruby"
     $NOOP sudo apt-get -y -qq install ruby2.1 ruby2.1-dev
   fi
 fi
 
-if [[ -z "$(gem list --local | grep diff-lcs)" ]] ; then
+if [[ -z $(gem list --local | grep diff-lcs) ]] ; then
   echo "Installing gem diff/lcs for Puppet's show_diff option"
   $NOOP sudo gem install --quiet --no-document diff-lcs
 fi
 
-if [ "$ID" == "centos" ] ; then
-  if [ -z "$(rpm -qa | grep puppet-server)" ] ; then
+if [[ $ID == 'centos' ]]; then
+  if [[ -z $(rpm -qa | grep puppet-server) ]]; then
     echo "Installing puppet server"
-    if [ "$VERSION_ID" == "7" ] ; then
+    if [[ $VERSION_ID == "7" ]]; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
-    elif [ "$VERSION_ID" == "6" ] ; then
+    elif [[ $VERSION_ID == "6" ]]; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm
     fi
     $NOOP sudo yum install -y puppet-server
   fi
-elif [ "$ID" == "ubuntu" ] ; then
-  if [ -z "$(dpkg-query -W -f='{Status}' puppetmaster | grep '\s+installed')" ] ; then
+elif [[ $ID == 'ubuntu' ]]; then
+  if [[ -z $(dpkg-query -W -f='{Status}' puppetmaster | grep '\s+installed') ]]; then
     echo "Installing puppet server"
-    if [ "$VERSION_ID" == "14.04" ] ; then
+    if [[ $VERSION_ID == '14.04' ]]; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-trusty.deb -o /var/cache/apt/puppetlabs-release-trusty.deb
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-trusty.deb
-    elif [ "$VERSION_ID" == "12.04" ] ; then
+    elif [[ $VERSION_ID == '12.04' ]]; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-precise.deb -o /var/cache/apt/puppetlabs-release-precise.deb
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-precise.deb
     fi
@@ -362,7 +334,7 @@ fi
 #[[ -d /var/lib/puppet/ssl ]] || $NOOP sudo mkdir -p /var/lib/puppet/ssl
 #$NOOP sudo chown -R puppet:puppet /var/lib/puppet/client* /var/lib/puppet/lib /var/lib/puppet/ssl
 
-if [[ -z "$(gem list --local | grep librarian-puppet)" ]] ; then
+if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
   echo "Installing librarian for puppet"
   $NOOP sudo gem install --quiet --no-document librarian-puppet
 
@@ -376,7 +348,7 @@ fi
 # TODO: Install Passenger, rack, etc. to run puppet master not in Webrick
 # See: https://docs.puppetlabs.com/guides/passenger.html
 
-  if [[ $ID == "ubuntu" ]] ; then
+  if [[ $ID == 'ubuntu' ]] ; then
     verbose "Enabling Puppet agent"
     $NOOP sudo puppet agent --enable
   fi
