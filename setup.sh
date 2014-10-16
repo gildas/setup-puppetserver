@@ -240,7 +240,7 @@ if [[ "$(hostname)" != "$hostname" ]] ; then
     $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/$/ ${hostname}/" /etc/hosts
     $NOOP sudo hostnamectl set-hostname ${hostname}
     echo "Restarting network"
-    $NOOP sudo service hostname restart
+    $NOOP sudo service hostname start
     $NOOP sudo service networking restart
     # Now it is safe to forget the old hostname
     $NOOP sudo sed -i "/^\s*127\.0\.1\.1/s/^.*$/127.0.1.1\t${hostname}/" /etc/hosts
