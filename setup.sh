@@ -336,13 +336,15 @@ fi
     $NOOP sudo chown -R puppet:puppet /etc/puppet
   fi
 
+  verbose "Downloading hiera data" 
+  verbose "Warning: You must run this server inside Interactive Intelligence's network or VPN" 
   [[ -d /var/lib/puppet/hiera ]] || $NOOP mkdir -p /var/lib/puppet/hiera 
   if [[ -d /var/lib/puppet/hiera/.git ]]; then
     verbose "Updating hiera profiles"
     $NOOP sudo sh -c "cd /var/lib/puppet/hiera && git pull"
   else
     verbose "Cloning hiera profiles"
-    $NOOP sudo git clone git://repo.apac.inin.com/hiera-data.git /var/lib/puppet/hiera
+    $NOOP sudo git clone git://172.22.18.15/hiera-data.git /var/lib/puppet/hiera
   fi
   $NOOP sudo chown -R puppet:puppet /var/lib/puppet/hiera
 
@@ -353,6 +355,8 @@ fi
     echo "First run of librarian (This can some time...)"
     $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
   fi
+
+  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
 
 if [[ $ID == 'centos' ]]; then
   enable_service puppetmaster
