@@ -344,9 +344,45 @@ fi
     $NOOP sudo chown -R puppet:puppet /etc/puppet
   fi
 
+  if [[ $ID == 'centos' ]]; then
+    if [[ $VERSION_ID == "7" ]]; then
+      # Running puppet master once to generate the CA
+      $NOOP systemctl start puppetmaster.service
+      certname=$(puppet cert list --all | grep $(hostname) | sed 's/^\+\s*"\([^"]*\)".*/\1/')
+
+      verbose "Installing Apache 2"
+      $NOOP sudo yum install -y httpd httpd-devel mod_ssl ruby-devel rubygems gcc-c++ curl-devel zlib-devel make automake openssl-devel
+
+      if [[ -z $(gem list --local | grep rack) ]] ; then
+        echo "Installing gem rack"
+        $NOOP sudo gem install --quiet --no-document rack
+	[[ -d /usr/share/puppet/rack/puppetmasterd        ]] || $NOOP mkdir -p /usr/share/puppet/rack/puppetmasterd
+	[[ -d /usr/share/puppet/rack/puppetmasterd/public ]] || $NOOP mkdir -p /usr/share/puppet/rack/puppetmasterd/public
+	[[ -d /usr/share/puppet/rack/puppetmasterd/tmp    ]] || $NOOP mkdir -p /usr/share/puppet/rack/puppetmasterd/tmp
+        $NOOP sudo chown -R puppet:puppet /usr/share/puppet/rack/puppetmasterd
+      fi
+      if [[ -z $(gem list --local | grep passenger) ]] ; then
+        echo "Installing gem passenger"
+        $NOOP sudo gem install --quiet --no-document passenger
+	$NOOP sudo passenger-install-apache2-module --auto
+      fi
+
+        (echo "<% @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/apache2/sites-available/puppetmaster.conf
+
+        erb /etc/puppet/templates/puppetmaster.conf.erb /etc/apache2/sites-available
+        sudo ln -s /etc/apache2/sites-available/puppetmaster.conf /etc/apache2/sites-enabled
+
+      if [[ ! -f /usr/share/puppet/rack/puppetmasterd/config.ru ]]; then
+        verbose "Installing Rack config for Puppet master"
+        $NOOP sudo cp /usr/share/puppet/ext/rack/config.ru /usr/share/puppet/rack/puppetmasterd
+        $NOOP sudo chown puppet:puppet /usr/share/puppet/rack/puppetmasterd/config.ru
+      fi
+    fi
+  fi
+
   verbose "Downloading hiera data" 
   verbose "Warning: You must run this server inside Interactive Intelligence's network or VPN" 
-  [[ -d /var/lib/puppet/hiera ]] || $NOOP mkdir -p /var/lib/puppet/hiera
+  [[ -d /var/lib/puppet/hiera ]] || $NOOP sudo mkdir -p /var/lib/puppet/hiera
   if [[ -d /var/lib/puppet/hiera/.git ]]; then
     verbose "Updating hiera profiles"
     $NOOP sudo sh -c "cd /var/lib/puppet/hiera && git pull"
@@ -354,7 +390,7 @@ fi
     verbose "Cloning hiera profiles"
     $NOOP sudo git clone git://172.22.18.15/hiera-data.git /var/lib/puppet/hiera
   fi
-  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/hiera
+  [[ -d /var/lib/puppet/hiera ]] || $NOOP sudo chown -R puppet:puppet /var/lib/puppet/hiera
 
   if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
     echo "Installing librarian for puppet"
@@ -365,10 +401,10 @@ fi
   fi
   $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
 
-  disable-service puppetmaster
-  enable-service  httpd
-  stop-service    puppetmaster
-  start-service   httpd
+  disable_service puppetmaster
+  enable_service  httpd
+  stop_service    puppetmaster
+  start_service   httpd
 
   verbose "Enabling and Starting Puppet agent"
   sudo puppet resource service puppet ensure=running enable=true
