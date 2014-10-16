@@ -181,10 +181,10 @@ function update_system() # {{{
     $NOOP sudo yum --assumeyes --quiet update
   elif [[ $ID == 'ubuntu' ]]; then
     $NOOP sudo apt-get -y -qq update
-    if [[ -z $(dpkg-query -W -f='{Status}' software-properties-common | grep '\s+installed') ]]; then
+    if [[ -z $(dpkg-query -W -f='{Status}' software-properties-common 2>&1 | grep '\s+installed') ]]; then
       $NOOP sudo apt-get -y -qq install software-properties-common
     fi
-    if [[ -z $(dpkg-query -W -f='{Status}' apt-file | grep '\s+installed') ]]; then
+    if [[ -z $(dpkg-query -W -f='{Status}' apt-file 2>&1 | grep '\s+installed') ]]; then
       $NOOP sudo apt-get -y -qq install apt-file
     fi
     if [[ -z $(apt-cache policy | grep brightbox/ruby-ng) ]]; then
@@ -285,7 +285,7 @@ if [[ $ID == 'centos' ]]; then
     $NOOP sudo yum install -y ruby
   fi
 elif [[ $ID == 'ubuntu' ]]; then
-  if [[ -z $(dpkg-query -W -f='{Status}' ruby2.1 | grep '\s+installed') ]]; then
+  if [[ -z $(dpkg-query -W -f='{Status}' ruby2.1 2>&1 | grep '\s+installed') ]]; then
     echo "Installing Ruby"
     $NOOP sudo apt-get -y -qq install ruby2.1 ruby2.1-dev
   fi
@@ -307,7 +307,7 @@ if [[ $ID == 'centos' ]]; then
     $NOOP sudo yum install -y puppet-server
   fi
 elif [[ $ID == 'ubuntu' ]]; then
-  if [[ -z $(dpkg-query -W -f='{Status}' puppetmaster | grep '\s+installed') ]]; then
+  if [[ -z $(dpkg-query -W -f='{Status}' puppetmaster 2>&1 | grep '\s+installed') ]]; then
     echo "Installing puppet server"
     if [[ $VERSION_ID == '14.04' ]]; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-trusty.deb -o /var/cache/apt/puppetlabs-release-trusty.deb
