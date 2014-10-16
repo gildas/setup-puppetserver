@@ -204,11 +204,17 @@ if [ "$ID" == 'centos' ] ; then
   $NOOP sudo yum --assumeyes --quiet update
 elif [ "$ID" == 'ubuntu' ] ; then
   $NOOP sudo apt-get -y -qq update
-  $NOOP sudo apt-get -y -qq install apt-file
-  $NOOP sudo apt-get -y -qq install software-properties-common
-  $NOOP sudo add-apt-repository -y ppa:brightbox/ruby-ng
-  $NOOP sudo apt-get -y -qq update
-  $NOOP sudo apt-file update 2>&1 > /dev/null  &
+  if [ -z "$(dpkg-query -W -f='{Status}' software-properties-common | grep '\s+installed')" ] ; then
+    $NOOP sudo apt-get -y -qq install software-properties-common
+  fi
+  if [ -z "$(dpkg-query -W -f='{Status}' apt-file | grep '\s+installed')" ] ; then
+    $NOOP sudo apt-get -y -qq install apt-file
+  fi
+  if [ -z "$(apt-cache policy | grep brightbox/ruby-ng)" ] ; then
+    $NOOP sudo add-apt-repository -y ppa:brightbox/ruby-ng
+    $NOOP sudo apt-get -y -qq update
+    $NOOP sudo apt-file update 2>&1 > /dev/null  &
+  fi
 fi
 
 if [ "$ID" == 'centos' ] ; then
