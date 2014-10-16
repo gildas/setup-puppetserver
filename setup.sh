@@ -182,7 +182,7 @@ if [ "$ID" == 'centos' ] ; then
   if [ "$VERSION_ID" == "7" ]; then
     supported=1
   else
-	  echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
+    echo "We are very sorry, but we cannot complete the automatic installation as the version $VERSION (id=$VERSION_ID) of $NAME is not yet supported."
     exit 1
   fi
 elif [ "$ID" == 'ubuntu' ] ; then
@@ -203,7 +203,7 @@ echo "Updating operating system (can take a few minutes)"
 if [ "$ID" == 'centos' ] ; then
   $NOOP sudo yum --assumeyes --quiet update
 elif [ "$ID" == 'ubuntu' ] ; then
-  $NOOP sudo apt-get --assume-yes --quiet update
+  $NOOP sudo apt-get -y -qq update
 fi
 
 if [ "$ID" == 'centos' ] ; then
@@ -281,7 +281,7 @@ fi
 
 if [ "$ID" == "centos" ] ; then
   if [ -z "$(rpm -qa | grep puppet-server)" ] ; then
-    echo "Installing puppet"
+    echo "Installing puppet server"
     if [ "$VERSION_ID" == "7" ] ; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm
     elif [ "$VERSION_ID" == "6" ] ; then
@@ -291,7 +291,7 @@ if [ "$ID" == "centos" ] ; then
   fi
 elif [ "$ID" == "ubuntu" ] ; then
   if [ -z "$(dpkg-query -W -f='{Status}' puppetmaster | grep '\s+installed')" ] ; then
-    echo "Installing puppet"
+    echo "Installing puppet server"
     if [ "$VERSION_ID" == "14.04" ] ; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-trusty.deb -o /var/cache/apt/puppetlabs-release-trusty.deb
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-trusty.deb
@@ -299,7 +299,7 @@ elif [ "$ID" == "ubuntu" ] ; then
       $NOOP sudo curl -sSL https://apt.puppetlabs.com/puppetlabs-release-precise.deb -o /var/cache/apt/puppetlabs-release-precise.deb
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-precise.deb
     fi
-    $NOOP sudo apt-get -y update
+    $NOOP sudo apt-get -y -qq update
     $NOOP sudo apt-get -y install puppetmaster-passenger
     $NOOP sudo apt-get -y install puppetmaster
   fi
