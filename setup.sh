@@ -348,7 +348,7 @@ fi
     if [[ $VERSION_ID == "7" ]]; then
       # Running puppet master once to generate the CA
       $NOOP systemctl start puppetmaster.service
-      certname=$(puppet cert list --all | grep $(hostname) | sed 's/^\+\s*"\([^"]*\)".*/\1/')
+      certname=$(sudo puppet cert list --all | grep $(hostname) | sed 's/^\+\s*"\([^"]*\)".*/\1/')
 
       verbose "Installing Apache 2"
       $NOOP sudo yum install -y httpd httpd-devel mod_ssl ruby-devel rubygems gcc-c++ curl-devel zlib-devel make automake openssl-devel
