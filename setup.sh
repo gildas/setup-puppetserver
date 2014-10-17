@@ -367,13 +367,14 @@ fi
         $NOOP sudo gem install --quiet --no-document passenger
 	$NOOP sudo /usr/local/bin/passenger-install-apache2-module --auto
 
-        $NOOP sudo cat > /etc/httpd/conf.modules.d/02-passenger.conf << EOD
+        (echo << EOD
 LoadModule passenger_module /usr/local/share/gems/gems/passenger-4.0.53/buildout/apache2/mod_passenger.so
 <IfModule mod_passenger.c>
   PassengerRoot /usr/local/share/gems/gems/passenger-4.0.53
   PassengerDefaultRuby /usr/bin/ruby
 </IfModule>
 EOD
+) | sudo tee /etc/httpd/conf.modules.d/02-passenger.conf > /dev/null
       fi
 
         (echo "<% @hostname=\"${hostname}\"; @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf
