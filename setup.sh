@@ -428,6 +428,8 @@ EOD
     enable_service mariadb
     start_service  mariadb
 
+    # Need to find a way to automate this
+    sudo /usr/bin/mysql_secure_installation
   elif [[ $ID == 'ubuntu' ]]; then
     if [[ -z $(dpkg-query -W -f='{Status}' mysql-server 2>&1 | grep '\s+installed') ]]; then
       echo "Installing MySQL Server"
