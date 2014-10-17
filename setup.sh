@@ -356,9 +356,10 @@ fi
       if [[ -z $(gem list --local | grep rack) ]] ; then
         echo "Installing gem rack"
         $NOOP sudo gem install --quiet --no-document rack
-	[[ -d /usr/share/puppet/rack/puppetmasterd        ]] || $NOOP mkdir -p /usr/share/puppet/rack/puppetmasterd
-	[[ -d /usr/share/puppet/rack/puppetmasterd/public ]] || $NOOP mkdir -p /usr/share/puppet/rack/puppetmasterd/public
-	[[ -d /usr/share/puppet/rack/puppetmasterd/tmp    ]] || $NOOP mkdir -p /usr/share/puppet/rack/puppetmasterd/tmp
+	[[ -d /usr/share/puppet/rack                      ]] || $NOOP sudo mkdir -p /usr/share/puppet/rack
+	[[ -d /usr/share/puppet/rack/puppetmasterd        ]] || $NOOP sudo mkdir -p /usr/share/puppet/rack/puppetmasterd
+	[[ -d /usr/share/puppet/rack/puppetmasterd/public ]] || $NOOP sudo mkdir -p /usr/share/puppet/rack/puppetmasterd/public
+	[[ -d /usr/share/puppet/rack/puppetmasterd/tmp    ]] || $NOOP sudo mkdir -p /usr/share/puppet/rack/puppetmasterd/tmp
         $NOOP sudo chown -R puppet:puppet /usr/share/puppet/rack/puppetmasterd
       fi
       if [[ -z $(gem list --local | grep passenger) ]] ; then
