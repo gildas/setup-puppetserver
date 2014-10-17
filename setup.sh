@@ -423,8 +423,10 @@ EOD
   # Open the firewall: ssh: 22, puppet mater: 8140, apache: 80/443, dashboard: 3000
   verbose "Configuring the firewall"
   if [[ $ID == 'centos' ]]; then
+    start_service firewalld
     $NOOP sudo firewall-cmd --zone=public --add-port=8140/tcp --permanent
     $NOOP sudo firewall-cmd --reload
+    enable_service firewalld
   elif [[ $ID == 'ubuntu' ]]; then
     $NOOP sudo ufw allow 22
     $NOOP sudo ufw allow 3000
