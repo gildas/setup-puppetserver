@@ -420,6 +420,24 @@ EOD
   #verbose "Adding a cron job for the puppet agent"
   #sudo puppet resource cron puppet-agent ensure=present user=root minute=30 command='/usr/bin/puppet agent --onetime --no-daemonize --splay'
 
+  if [[ $ID == 'centos' ]]; then
+    if [[ -z $(rpm -qa | grep mariadb-server) ]]; then
+      echo "Installing MariaDB Server"
+      $NOOP sudo yum install -y mariadb-server
+    fi
+    enable_service mariadb
+    start_service  mariadb
+
+  elif [[ $ID == 'ubuntu' ]]; then
+    if [[ -z $(dpkg-query -W -f='{Status}' mysql-server 2>&1 | grep '\s+installed') ]]; then
+      echo "Installing MySQL Server"
+      $NOOP sudo apt-get -y -qq install mysql-server
+    fi
+    enable_service mariadb
+    start_service  mariadb
+
+  fi
+
   # Open the firewall: ssh: 22, puppet mater: 8140, apache: 80/443, dashboard: 3000
   verbose "Configuring the firewall"
   if [[ $ID == 'centos' ]]; then
