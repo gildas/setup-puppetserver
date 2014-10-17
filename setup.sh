@@ -413,7 +413,9 @@ EOD
   start_service   httpd
 
   verbose "Enabling and Starting Puppet agent"
-  sudo puppet resource service puppet ensure=running enable=true
+  #sudo puppet resource service puppet ensure=running enable=true
+  enable_service  puppet
+  start_service   puppet
   #verbose "Adding a cron job for the puppet agent"
   #sudo puppet resource cron puppet-agent ensure=present user=root minute=30 command='/usr/bin/puppet agent --onetime --no-daemonize --splay'
 
