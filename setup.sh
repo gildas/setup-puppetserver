@@ -365,7 +365,7 @@ fi
       if [[ -z $(gem list --local | grep passenger) ]] ; then
         echo "Installing gem passenger"
         $NOOP sudo gem install --quiet --no-document passenger
-	$NOOP sudo passenger-install-apache2-module --auto
+	$NOOP sudo /usr/local/bin/passenger-install-apache2-module --auto
       fi
 
         (echo "<% @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/apache2/sites-available/puppetmaster.conf
