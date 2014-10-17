@@ -325,7 +325,7 @@ elif [[ $ID == 'ubuntu' ]]; then
       $NOOP sudo dpkg -i /var/cache/apt/puppetlabs-release-precise.deb
     fi
     $NOOP sudo apt-get -y -qq update
-    $NOOP sudo apt-get -y -qq install puppetmaster-passenger
+    $NOOP sudo apt-get -y -qq install passenger-dev puppetmaster-passenger
   fi
 fi
 
@@ -347,8 +347,7 @@ fi
   if [[ $ID == 'centos' ]]; then
     if [[ $VERSION_ID == "7" ]]; then
       # Running puppet master once to generate the CA
-      $NOOP systemctl start puppetmaster.service
-      certname=$(sudo puppet cert list --all | grep $(hostname) | sed 's/^\+\s*"\([^"]*\)".*/\1/')
+      #$NOOP systemctl start puppetmaster.service
 
       verbose "Installing Apache 2"
       $NOOP sudo yum install -y httpd httpd-devel mod_ssl ruby-devel rubygems gcc-c++ curl-devel zlib-devel make automake openssl-devel
@@ -377,6 +376,7 @@ LoadModule passenger_module /usr/local/share/gems/gems/passenger-4.0.53/buildout
 EOD
 ) | sudo tee /etc/httpd/conf.modules.d/02-passenger.conf > /dev/null
 
+      certname=puppet
       (echo "<% @hostname=\"${hostname}\"; @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf
 
       if [[ ! -f /usr/share/puppet/rack/puppetmasterd/config.ru ]]; then
