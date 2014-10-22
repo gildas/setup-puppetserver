@@ -387,24 +387,35 @@ EOD
     fi
   fi
 
-  verbose "Downloading hiera data" 
-  verbose "Warning: You must run this server inside Interactive Intelligence's network or VPN" 
-  [[ -d /var/lib/puppet/hiera ]] || $NOOP sudo mkdir -p /var/lib/puppet/hiera
-  if [[ -d /var/lib/puppet/hiera/.git ]]; then
-    verbose "Updating hiera profiles"
-    $NOOP sudo sh -c "cd /var/lib/puppet/hiera && git pull"
-  else
-    verbose "Cloning hiera profiles"
-    $NOOP sudo git clone git://172.22.18.15/hiera-data.git /var/lib/puppet/hiera
-  fi
-  [[ -d /var/lib/puppet/hiera ]] || $NOOP sudo chown -R puppet:puppet /var/lib/puppet/hiera
+  #####
+#  if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
+#    echo "Installing librarian for puppet"
+#    $NOOP sudo gem install --quiet --no-document librarian-puppet
+#
+#    echo "First run of librarian (This can some time...)"
+#    $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
+#  fi
+  #####
 
-  if [[ -z $(gem list --local | grep librarian-puppet) ]] ; then
-    echo "Installing librarian for puppet"
-    $NOOP sudo gem install --quiet --no-document librarian-puppet
+  [[ -d /var/lib/hiera ]]                      || $NOOP sudo mkdir -p /var/lib/hiera
+  [[ $(stat -c %U /var/lib/hiera) == puppet ]] || $NOOP chown puppet /var/lib/hiera
+  [[ $(stat -c %G /var/lib/hiera) == puppet ]] || $NOOP chgrp puppet /var/lib/hiera
+  [[ $(stat -c %a /var/lib/hiera) == 775    ]] || $NOOP chmod 775 /var/lib/hiera
+  [[ -r /etc/hiera.yaml ]]                     || $NOOP ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
 
-    echo "First run of librarian (This can some time...)"
-    $NOOP sudo sh -c "cd /etc/puppet && /usr/local/bin/librarian-puppet update --verbose 2>&1 | tee -a /var/log/puppet/librarian.log > /dev/null"
+  [[ -d /var/cache/r10k ]]                      || $NOOP mkdir -p /var/cache/r10k
+  [[ $(stat -c %U /var/cache/r10k) == puppet ]] || $NOOP chown puppet /var/cache/r10k
+  [[ $(stat -c %G /var/cache/r10k) == puppet ]] || $NOOP chgrp puppet /var/cache/r10k
+  [[ $(stat -c %a /var/cache/r10k) == 775    ]] || $NOOP chmod 775 /var/cache/r10k
+  [[ -r /etc/r10k.yaml ]]                       || $NOOP ln -s /etc/puppet/r10k.yaml /etc/r10k.yaml
+
+  if [[ -z $(gem list --local | grep r10k) ]] ; then
+    echo "Installing r10k for puppet"
+    $NOOP sudo gem install --quiet --no-document r10k
+
+    echo "First run of r10k (This can some time...)"
+    echo "  Deploying common hiera configuration"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment common 2>&1 | tee -a /var/log/puppet/r10k-common.log > /dev/null"
   fi
 #  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
 
