@@ -349,8 +349,19 @@ fi
       # Running puppet master once to generate the CA
       #$NOOP systemctl start puppetmaster.service
 
-      verbose "Installing Apache 2"
-      $NOOP sudo yum install -y httpd httpd-devel mod_ssl ruby-devel rubygems gcc-c++ curl-devel zlib-devel make automake openssl-devel
+      if [[ -z $(rpm -qa | grep httpd) ]]; then
+        verbose "Installing Apache 2"
+        [[ ! -z $(rpm -qa | grep httpd) ]]         || $NOOP sudo yum install -y httpd
+        [[ ! -z $(rpm -qa | grep httpd-devel) ]]   || $NOOP sudo yum install -y httpd-devel
+        [[ ! -z $(rpm -qa | grep mod_ssl) ]]       || $NOOP sudo yum install -y mod_ssl
+        [[ ! -z $(rpm -qa | grep ruby-devel) ]]    || $NOOP sudo yum install -y ruby-devel
+        [[ ! -z $(rpm -qa | grep gcc-c++) ]]       || $NOOP sudo yum install -y gcc-c++
+        [[ ! -z $(rpm -qa | grep curl-devel) ]]    || $NOOP sudo yum install -y curl-devel
+        [[ ! -z $(rpm -qa | grep zlib-devel) ]]    || $NOOP sudo yum install -y zlib-devel
+        [[ ! -z $(rpm -qa | grep make) ]]          || $NOOP sudo yum install -y make
+        [[ ! -z $(rpm -qa | grep automake) ]]      || $NOOP sudo yum install -y automake
+        [[ ! -z $(rpm -qa | grep openssl-devel) ]] || $NOOP sudo yum install -y openssl-devel
+      fi
 
       if [[ -z $(gem list --local | grep rack) ]] ; then
         echo "Installing gem rack"
