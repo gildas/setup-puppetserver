@@ -398,16 +398,16 @@ EOD
   #####
 
   [[ -d /var/lib/hiera ]]                      || $NOOP sudo mkdir -p /var/lib/hiera
-  [[ $(stat -c %U /var/lib/hiera) == puppet ]] || $NOOP chown puppet /var/lib/hiera
-  [[ $(stat -c %G /var/lib/hiera) == puppet ]] || $NOOP chgrp puppet /var/lib/hiera
-  [[ $(stat -c %a /var/lib/hiera) == 775    ]] || $NOOP chmod 775 /var/lib/hiera
-  [[ -r /etc/hiera.yaml ]]                     || $NOOP ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
+  [[ $(stat -c %U /var/lib/hiera) == puppet ]] || $NOOP sudo chown puppet /var/lib/hiera
+  [[ $(stat -c %G /var/lib/hiera) == puppet ]] || $NOOP sudo chgrp puppet /var/lib/hiera
+  [[ $(stat -c %a /var/lib/hiera) == 775    ]] || $NOOP sudo chmod 775 /var/lib/hiera
+  [[ -r /etc/hiera.yaml ]]                     || $NOOP sudo ln -s /etc/puppet/hiera.yaml /etc/hiera.yaml
 
-  [[ -d /var/cache/r10k ]]                      || $NOOP mkdir -p /var/cache/r10k
-  [[ $(stat -c %U /var/cache/r10k) == puppet ]] || $NOOP chown puppet /var/cache/r10k
-  [[ $(stat -c %G /var/cache/r10k) == puppet ]] || $NOOP chgrp puppet /var/cache/r10k
-  [[ $(stat -c %a /var/cache/r10k) == 775    ]] || $NOOP chmod 775 /var/cache/r10k
-  [[ -r /etc/r10k.yaml ]]                       || $NOOP ln -s /etc/puppet/r10k.yaml /etc/r10k.yaml
+  [[ -d /var/cache/r10k ]]                      || $NOOP sudo mkdir -p /var/cache/r10k
+  [[ $(stat -c %U /var/cache/r10k) == puppet ]] || $NOOP sudo chown puppet /var/cache/r10k
+  [[ $(stat -c %G /var/cache/r10k) == puppet ]] || $NOOP sudo chgrp puppet /var/cache/r10k
+  [[ $(stat -c %a /var/cache/r10k) == 775    ]] || $NOOP sudo chmod 775 /var/cache/r10k
+  [[ -r /etc/r10k.yaml ]]                       || $NOOP sudo ln -s /etc/puppet/r10k.yaml /etc/r10k.yaml
 
   if [[ -z $(gem list --local | grep r10k) ]] ; then
     echo "Installing r10k for puppet"
