@@ -387,8 +387,14 @@ LoadModule passenger_module /usr/local/share/gems/gems/passenger-4.0.53/buildout
 EOD
 ) | sudo tee /etc/httpd/conf.modules.d/02-passenger.conf > /dev/null
 
+      certificate=$(sudo puppet master --configprint hostcert)
+      private_key=$(sudo puppet master --configprint hostprivkey)
+      ca_certificate=$(sudo puppet master --configprint localcacert)
+      ca_chain=$(sudo puppet master --configprint localcacert)
+      ca_revocation=$(sudo puppet master --configprint cacrl)
+
       certname=puppet
-      (echo "<% @hostname=\"${hostname}\"; @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf > /dev/null
+      (echo "<% @hostname=\"${hostname}\"; @certificate=\"${certificate}\"; @private_key=\"${private_key}\" @ca_certificate=\"${ca_certificate}\" @ca_chain=\"${ca_chain}\" @ca_revocation=\"${ca_revocation}\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf > /dev/null
 
       if [[ ! -f /usr/share/puppet/rack/puppetmasterd/config.ru ]]; then
         verbose "Installing Rack config for Puppet master"
