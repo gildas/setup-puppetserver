@@ -423,11 +423,13 @@ EOD
   if [[ -z $(gem list --local | grep r10k) ]] ; then
     echo "Installing r10k for puppet"
     $NOOP sudo gem install --quiet --no-document r10k
-
-    echo "First run of r10k (This can some time...)"
-    echo "  Deploying common hiera configuration"
-    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment common 2>&1 | tee -a /var/log/puppet/r10k-common.log > /dev/null"
   fi
+
+  if [[ ! -d /var/lib/hiera/common ]]; then
+    echo "Deploying common hiera configuration via r10k"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment common 2>&1 | tee -a /var/log/puppet/r10k-common.log"
+  fi
+
 #  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
 
   disable_service puppetmaster
