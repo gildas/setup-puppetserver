@@ -394,7 +394,7 @@ EOD
       ca_revocation=$(sudo puppet master --configprint cacrl)
 
       certname=puppet
-      (echo "<% @hostname=\"${hostname}\"; @certificate=\"${certificate}\"; @private_key=\"${private_key}\" @ca_certificate=\"${ca_certificate}\" @ca_chain=\"${ca_chain}\" @ca_revocation=\"${ca_revocation}\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf > /dev/null
+      (echo "<% @hostname=\"${hostname}\"; @certificate=\"${certificate}\"; @private_key=\"${private_key}\"; @ca_certificate=\"${ca_certificate}\"; @ca_chain=\"${ca_chain}\"; @ca_revocation=\"${ca_revocation}\"; -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf > /dev/null
 
       if [[ ! -f /usr/share/puppet/rack/puppetmasterd/config.ru ]]; then
         verbose "Installing Rack config for Puppet master"
