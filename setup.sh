@@ -377,7 +377,7 @@ EOD
 ) | sudo tee /etc/httpd/conf.modules.d/02-passenger.conf > /dev/null
 
       certname=puppet
-      (echo "<% @hostname=\"${hostname}\"; @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf
+      (echo "<% @hostname=\"${hostname}\"; @certificate=\"/var/lib/puppet/ssl/certs/${certname}.pem\"; @private_key=\"/var/lib/puppet/ssl/private_keys/${certname}.pem\" -%>" && cat /etc/puppet/templates/puppetmaster.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.d/puppetmaster.conf > /dev/null
 
       if [[ ! -f /usr/share/puppet/rack/puppetmasterd/config.ru ]]; then
         verbose "Installing Rack config for Puppet master"
