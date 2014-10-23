@@ -357,12 +357,17 @@ EOD
 ) | erb -T - | sudo tee /etc/puppet/puppet.conf > /dev/null
   fi
 
-  if [[ ! -r /etc/puppet/manifests/boostrap.pp ]] ; then
+  bootstrap_dir="/etc/puppet/modules/bootstrap/manifests"
+  [[ -d ${bootstrap_dir} ]] || $NOOP sudo mkdir -p ${bootstrap_dir}
+  [[ $(stat -c %U ${bootstrap_dir}) == puppet ]] || $NOOP sudo chown puppet ${bootstrap_dir}
+  [[ $(stat -c %G ${bootstrap_dir}) == puppet ]] || $NOOP sudo chgrp puppet ${bootstrap_dir}
+
+  if [[ ! -r ${bootstrap_dir}/init.pp ]] ; then
   (cat << EOD
 class bootstrap
 {
-  exec { path => "/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
-  file
+  Exec { path => "/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
+  File
   {
     owner => 'root',
     group => 'root',
@@ -376,9 +381,9 @@ class bootstrap
   }
 }
 EOD
-) | erb -T - | sudo tee /etc/puppet/manifests/bootstrap.pp > /dev/null
+) | erb -T - | sudo tee ${bootstrap_dir}/init.pp > /dev/null
 
-  sudo puppet --modulepath /etc/puppet -e 'include bootstrap'
+  sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppet/puppet-install.log --debug -e 'include bootstrap'
   fi
   
 exit 0
