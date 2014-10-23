@@ -332,6 +332,7 @@ elif [[ $ID == 'ubuntu' ]]; then
 fi
 
   # Updating puppet.conf for initial configuration
+  if [[ $(md5sum /etc/puppet/puppet.conf | cut -d ' ' -f 1) != '73b7836a03de0dd8ece774a43627fef5' ]]; then
   (cat << EOD
 [main]
   logdir = /var/log/puppet
@@ -349,11 +350,36 @@ fi
 [agent]
   certname = puppetmaster
   server = puppet
+  environment=${environment}
   classfile = \$vardir/classes.txt
   localconfig = \$vardir/localconfig
 EOD
-) | erb -T - | tee /tmp/puppet.conf > /dev/null
+) | erb -T - | sudo tee /etc/puppet/puppet.conf > /dev/null
+  fi
 
+  if [[ ! -r /etc/puppet/manifests/boostrap.pp ]] ; then
+  (cat << EOD
+class bootstrap
+{
+  exec { path => "/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
+  file
+  {
+    owner => 'root',
+    group => 'root',
+    mode  => '0644',
+  }
+
+  class { 'puppetdb': }
+
+  class { 'puppetdb::master::config':
+    puppetdb_server => 'puppet',
+  }
+}
+EOD
+) | erb -T - | sudo tee /etc/puppet/manifests/bootstrap.pp > /dev/null
+
+  sudo puppet --modulepath /etc/puppet -e 'include bootstrap'
+  fi
   
 exit 0
   # Make sure puppet server is off for a while
