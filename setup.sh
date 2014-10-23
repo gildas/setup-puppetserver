@@ -262,7 +262,9 @@ function set_hostname() # {{{
 function main() # {{{
 {
   hostname=${1:-puppet}
+  environment=${2:-test}
 
+  echo "Installing a puppet server with a hostname of ${hostname} running in the environment: ${environment}"
   [[ ! -z $NOOP ]] && echo "Running in dry mode (no command will be executed)"
 
   # Loads the distro information
@@ -431,9 +433,20 @@ EOD
     $NOOP sudo gem install --quiet --no-document r10k
   fi
 
-  if [[ ! -d /var/lib/hiera/common ]]; then
-    echo "Deploying common hiera configuration via r10k"
+  if [[ -d /var/lib/hiera/common ]]; then
+    echo "Updating common hiera configuration via r10k"
     $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment common 2>&1 | tee -a /var/log/puppet/r10k-common.log"
+  else
+    echo "Installing common hiera configuration via r10k"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment common 2>&1 | tee -a /var/log/puppet/r10k-common.log"
+  fi
+
+  if [[ -d /var/lib/hiera/${environment} ]]; then
+    echo "Updating ${environment} environment via r10k"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment ${environment} 2>&1 | tee -a /var/log/puppet/r10k-${environment}.log"
+  else
+    echo "Installing ${environment} environment via r10k"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment ${environment} 2>&1 | tee -a /var/log/puppet/r10k-${environment}.log"
   fi
 
 #  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
