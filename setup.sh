@@ -385,14 +385,7 @@ fi
 	$NOOP sudo /usr/local/bin/passenger-install-apache2-module --auto
       fi
 
-      (echo << EOD
-LoadModule passenger_module /usr/local/share/gems/gems/passenger-4.0.53/buildout/apache2/mod_passenger.so
-<IfModule mod_passenger.c>
-  PassengerRoot /usr/local/share/gems/gems/passenger-4.0.53
-  PassengerDefaultRuby /usr/bin/ruby
-</IfModule>
-EOD
-) | sudo tee /etc/httpd/conf.modules.d/02-passenger.conf > /dev/null
+      (cat /etc/puppet/templates/mod_passenger.conf.erb) | erb -T - | sudo tee /etc/httpd/conf.modules.d/02-passenger.conf > /dev/null
 
       certificate=$(sudo puppet master --configprint hostcert)
       private_key=$(sudo puppet master --configprint hostprivkey)
