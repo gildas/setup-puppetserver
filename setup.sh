@@ -346,6 +346,11 @@ fi
     $NOOP sudo chown -R puppet:puppet /etc/puppet
   fi
 
+  echo "Generating SSL certificates"
+  start_service puppetmaster
+  sleep 1
+  stop_service puppetmaster
+
   if [[ $ID == 'centos' ]]; then
     if [[ $VERSION_ID == "7" ]]; then
       # Running puppet master once to generate the CA
