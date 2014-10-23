@@ -331,6 +331,7 @@ elif [[ $ID == 'ubuntu' ]]; then
   fi
 fi
 
+exit 0
   # Make sure puppet server is off for a while
   stop_service puppetmaster
 
