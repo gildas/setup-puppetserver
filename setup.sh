@@ -463,51 +463,6 @@ EOD
   #verbose "Adding a cron job for the puppet agent"
   #sudo puppet resource cron puppet-agent ensure=present user=root minute=30 command='/usr/bin/puppet agent --onetime --no-daemonize --splay'
 
-  # Not ready to install MySQL and the rest yet
-  if [[ $ID == 'centos-new' ]]; then
-    if [[ -z $(rpm -qa | grep mariadb-server) ]]; then
-      echo "Installing MariaDB Server"
-      $NOOP sudo yum install -y mariadb-server
-    fi
-    if [[ -z $(rpm -qa | grep mariadb-devel) ]]; then
-      echo "Installing MariaDB Development tools"
-      $NOOP sudo yum install -y mariadb-devel
-    fi
-    enable_service mariadb
-    start_service  mariadb
-
-    # Need to find a way to automate this
-    sudo /usr/bin/mysql_secure_installation
-
-    $NOOP sudo mysql -u root -p D0gf00d << EOF
-CREATE DATABASE dashboard CHARACTER SET utf8;
-CREATE USER 'dashboard'@'localhost' IDENTIFIED BY 'D0gf00d';
-GRANT ALL PRIVILEGES ON dashboard.* TO 'dashboard'@'localhost';
-FLUSH PRIVILEGES;
-EOF
-
-  elif [[ $ID == 'ubuntu' ]]; then
-    if [[ -z $(dpkg-query -W -f='{Status}' mysql-server 2>&1 | grep '\s+installed') ]]; then
-      echo "Installing MySQL Server"
-      $NOOP sudo apt-get -y -qq install mysql-server
-    fi
-    enable_service mariadb
-    start_service  mariadb
-
-  fi
-
-  if [[ $ID == 'centos' ]]; then
-    if [[ -z $(rpm -qa | grep mariadb-devel) ]]; then
-      $NOOP sudo yum install -y puppet-dashboard
-    fi
-
-    # Configure Dashboard
-
-  else
-    echo "NOT YET"
-  fi
-
-
   # Open the firewall: ssh: 22, puppet mater: 8140, apache: 80/443, dashboard: 3000
   verbose "Configuring the firewall"
   if [[ $ID == 'centos' ]]; then
