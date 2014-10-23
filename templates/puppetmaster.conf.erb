@@ -1,0 +1,68 @@
+# This Apache 2 virtual host config shows how to use Puppet as a Rack
+# application via Passenger. See
+# http://docs.puppetlabs.com/guides/passenger.html for more information.
+
+# You can also use the included config.ru file to run Puppet with other Rack
+# servers instead of Passenger.
+
+# you probably want to tune these settings
+PassengerHighPerformance on
+
+# Set this to about 1.5 times the number of CPU cores in your master:
+PassengerMaxPoolSize 6
+# Stop processes if they sit idle for 25 minutes
+PassengerPoolIdleTime 1500
+# Recycle master processes after they service 1000 requests
+# PassengerMaxRequests 1000
+PassengerStatThrottleRate 120
+
+Listen 8140
+<VirtualHost *:8140>
+        ServerName <%= @hostname %>
+        SSLEngine on
+        SSLProtocol             ALL -SSLv2 -SSLv3
+        SSLCipherSuite          EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:+CAMELLIA256:+AES256:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA256-SHA:AES256-SHA:CAMELLIA128-SHA:AES128-SHA
+        SSLHonorCipherOrder     on
+
+        SSLCertificateFile      <%= @certificate %>
+        SSLCertificateKeyFile   <%= @private_key %>
+        SSLCertificateChainFile <%= @ca_chain %>
+        SSLCACertificateFile    <%= @ca_certificate %>
+        # If Apache complains about invalid signatures on the CRL, you can try disabling
+        # CRL checking by commenting the next line, but this is not recommended.
+	SSLCARevocationFile     <%= @ca_revocation %>
+        # Apache 2.4 introduces the SSLCARevocationCheck directive and sets it to none
+        # which effectively disables CRL checking; if you are using Apache 2.4+ you must
+        # specify 'SSLCARevocationCheck chain' to actually use the CRL.
+        SSLCARevocationCheck chain
+        SSLVerifyClient optional
+        SSLVerifyDepth  1
+        # The `ExportCertData` option is needed for agent certificate expiration warnings
+        SSLOptions +StdEnvVars +ExportCertData
+
+	# Set the keep alive timeout high enough to benefit from puppet 3.7 improvements
+	KeepAliveTimeout 20
+
+        # This header needs to be set if using a loadbalancer or proxy
+        RequestHeader unset X-Forwarded-For
+
+        RequestHeader set X-SSL-Subject %{SSL_CLIENT_S_DN}e
+        RequestHeader set X-Client-DN %{SSL_CLIENT_S_DN}e
+        RequestHeader set X-Client-Verify %{SSL_CLIENT_VERIFY}e
+
+        DocumentRoot /usr/share/puppet/rack/puppetmasterd/public/
+        RackBaseURI /
+        <Directory /usr/share/puppet/rack/puppetmasterd/>
+                Options None
+                AllowOverride None
+                Order allow,deny
+                allow from all
+         # These come from the Passenger install:
+         # This relaxes Apache security settings.
+         #AllowOverride all
+         # MultiViews must be turned off.
+         #Options -MultiViews
+         # Uncomment this if you're on Apache >= 2.4:
+         ##Require all granted
+        </Directory>
+</VirtualHost>
