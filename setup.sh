@@ -331,6 +331,8 @@ elif [[ $ID == 'ubuntu' ]]; then
   fi
 fi
 
+  start_service puppetmaster
+
   # Updating puppet.conf for initial configuration
   if [[ $(md5sum /etc/puppet/puppet.conf | cut -d ' ' -f 1) != '73b7836a03de0dd8ece774a43627fef5' ]]; then
   (cat << EOD
@@ -343,7 +345,7 @@ fi
 
 [master]
   certname = puppet
-  dns_alt_names = puppet,puppet.apac.inin.com,puppet.lab.apac.inin.com,puppet.demo.apac.inin.com,puppet.emea.inin.com 
+  dns_alt_names = puppet,puppet.localdomain,puppet.apac.inin.com,puppet.lab.apac.inin.com,puppet.demo.apac.inin.com,puppet.emea.inin.com 
   allow_duplicate_certs = true
   autosign = true
 
@@ -361,6 +363,11 @@ EOD
   [[ -d ${bootstrap_dir} ]] || $NOOP sudo mkdir -p ${bootstrap_dir}
   [[ $(stat -c %U ${bootstrap_dir}) == puppet ]] || $NOOP sudo chown puppet ${bootstrap_dir}
   [[ $(stat -c %G ${bootstrap_dir}) == puppet ]] || $NOOP sudo chgrp puppet ${bootstrap_dir}
+
+  if [[ -z $(puppet module list --modulepath /etc/puppet/modules | grep puppetlabs-puppetdb) ]] ; then
+    echo "Installing puppetdb module"
+    sudo puppet --modulepath /etc/puppet/modules module install puppetlabs/puppetdb
+  fi
 
   if [[ ! -r ${bootstrap_dir}/init.pp ]] ; then
     echo "Copying boostrap module"
