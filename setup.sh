@@ -363,6 +363,7 @@ EOD
   [[ $(stat -c %G ${bootstrap_dir}) == puppet ]] || $NOOP sudo chgrp puppet ${bootstrap_dir}
 
   if [[ ! -r ${bootstrap_dir}/init.pp ]] ; then
+    echo "Copying boostrap module"
   (cat << EOD
 class bootstrap
 {
@@ -382,9 +383,9 @@ class bootstrap
 }
 EOD
 ) | erb -T - | sudo tee ${bootstrap_dir}/init.pp > /dev/null
+  fi
 
   sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppet/puppet-install.log --debug -e 'include bootstrap'
-  fi
   
 exit 0
   # Make sure puppet server is off for a while
