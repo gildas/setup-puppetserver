@@ -459,16 +459,16 @@ EOD
 
       if [[ -z $(rpm -qa | grep httpd) ]]; then
         verbose "Installing Apache 2"
-        [[ ! -z $(rpm -qa | grep httpd) ]]         || $NOOP sudo yum install -y httpd
-        [[ ! -z $(rpm -qa | grep httpd-devel) ]]   || $NOOP sudo yum install -y httpd-devel
-        [[ ! -z $(rpm -qa | grep mod_ssl) ]]       || $NOOP sudo yum install -y mod_ssl
-        [[ ! -z $(rpm -qa | grep ruby-devel) ]]    || $NOOP sudo yum install -y ruby-devel
-        [[ ! -z $(rpm -qa | grep gcc-c++) ]]       || $NOOP sudo yum install -y gcc-c++
-        [[ ! -z $(rpm -qa | grep curl-devel) ]]    || $NOOP sudo yum install -y curl-devel
-        [[ ! -z $(rpm -qa | grep zlib-devel) ]]    || $NOOP sudo yum install -y zlib-devel
-        [[ ! -z $(rpm -qa | grep make) ]]          || $NOOP sudo yum install -y make
-        [[ ! -z $(rpm -qa | grep automake) ]]      || $NOOP sudo yum install -y automake
-        [[ ! -z $(rpm -qa | grep openssl-devel) ]] || $NOOP sudo yum install -y openssl-devel
+	[[ ! -z $(rpm -qa | grep httpd) ]]         || (echo "  Installing httpd"                       && $NOOP sudo yum install -y --quiet httpd)
+	[[ ! -z $(rpm -qa | grep httpd-devel) ]]   || (echo "  Installing development tools for httpd" && $NOOP sudo yum install -y --quiet httpd-devel)
+	[[ ! -z $(rpm -qa | grep mod_ssl) ]]       || (echo "  Installing ssl module for httpd"        && $NOOP sudo yum install -y --quiet mod_ssl)
+	[[ ! -z $(rpm -qa | grep ruby-devel) ]]    || (echo "  Installing development tools for ruby"  && $NOOP sudo yum install -y --quiet ruby-devel)
+	[[ ! -z $(rpm -qa | grep gcc-c++) ]]       || (echo "  Installing C++ compiler"                && $NOOP sudo yum install -y --quiet gcc-c++)
+	[[ ! -z $(rpm -qa | grep curl-devel) ]]    || (echo "  Installing development tools for curl"  && $NOOP sudo yum install -y --quiet curl-devel)
+	[[ ! -z $(rpm -qa | grep zlib-devel) ]]    || (echo "  Installing development tools for ZLib"  && $NOOP sudo yum install -y --quiet zlib-devel)
+	[[ ! -z $(rpm -qa | grep make) ]]          || (echo "  Installing make"                        && $NOOP sudo yum install -y --quiet make)
+	[[ ! -z $(rpm -qa | grep automake) ]]      || (echo "  Installing automake"                    && $NOOP sudo yum install -y --quiet automake)
+	[[ ! -z $(rpm -qa | grep openssl-devel) ]] || (echo "  Installing development tools for SSL"   && $NOOP sudo yum install -y --quiet openssl-devel)
       fi
 
       if [[ -z $(gem list --local | grep rack) ]] ; then
