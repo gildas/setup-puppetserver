@@ -340,9 +340,10 @@ elif [[ $ID == 'ubuntu' ]]; then
   fi
 fi
 
-  # Updating puppet.conf for initial configuration
-  if [[ $(md5sum /etc/puppet/puppet.conf | cut -d ' ' -f 1) != '73b7836a03de0dd8ece774a43627fef5' ]]; then
-  (cat << EOD
+  if [[ -z $(rpm -qa | grep puppetdb) ]] ; then
+    # Updating puppet.conf for initial configuration
+    if [[ $(md5sum /etc/puppet/puppet.conf | cut -d ' ' -f 1) != '73b7836a03de0dd8ece774a43627fef5' ]]; then
+    (cat << EOD
 [main]
   logdir = /var/log/puppet
   rundir = /var/run/puppet
@@ -364,21 +365,21 @@ fi
   localconfig = \$vardir/localconfig
 EOD
 ) | erb -T - | sudo tee /etc/puppet/puppet.conf > /dev/null
-  fi
+    fi
 
-  bootstrap_dir="/etc/puppet/modules/bootstrap/manifests"
-  [[ -d ${bootstrap_dir} ]] || $NOOP sudo mkdir -p ${bootstrap_dir}
-  [[ $(stat -c %U ${bootstrap_dir}) == puppet ]] || $NOOP sudo chown puppet ${bootstrap_dir}
-  [[ $(stat -c %G ${bootstrap_dir}) == puppet ]] || $NOOP sudo chgrp puppet ${bootstrap_dir}
+    bootstrap_dir="/etc/puppet/modules/bootstrap/manifests"
+    [[ -d ${bootstrap_dir} ]] || $NOOP sudo mkdir -p ${bootstrap_dir}
+    [[ $(stat -c %U ${bootstrap_dir}) == puppet ]] || $NOOP sudo chown puppet ${bootstrap_dir}
+    [[ $(stat -c %G ${bootstrap_dir}) == puppet ]] || $NOOP sudo chgrp puppet ${bootstrap_dir}
 
-  if [[ -z $(puppet module list --modulepath /etc/puppet/modules | grep puppetlabs-puppetdb) ]] ; then
-    echo "Installing puppetdb module"
-    sudo puppet module install puppetlabs/puppetdb --modulepath /etc/puppet/modules
-  fi
+    if [[ -z $(puppet module list --modulepath /etc/puppet/modules | grep puppetlabs-puppetdb) ]] ; then
+      echo "Installing puppetdb module"
+      sudo puppet module install puppetlabs/puppetdb --modulepath /etc/puppet/modules
+    fi
 
-  if [[ ! -r ${bootstrap_dir}/init.pp ]] ; then
-    echo "Copying boostrap module"
-  (cat << EOD
+    if [[ ! -r ${bootstrap_dir}/init.pp ]] ; then
+      echo "Copying boostrap module"
+    (cat << EOD
 class bootstrap
 {
   Exec { path => "/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
@@ -400,49 +401,44 @@ class bootstrap
 }
 EOD
 ) | erb -T - | sudo tee ${bootstrap_dir}/init.pp > /dev/null
+    fi
+
+    if [[ -z $(sudo puppet master --configprint hostcert) ]] ; then
+      # This should generate the server certificate as well
+      echo "Generating SSL certificates"
+      echo "  Starting Puppet Server"
+      start_service puppetmaster
+      echo -n "  Waiting for server certificate."
+      i=0
+      while [[ $i < 10 ]] ; do
+        [[ -f /var/lib/puppet/ssl/certs/puppet.pem ]] && break
+        sleep 1
+        echo -n "."
+        ((i++))
+      done
+      echo " "
+      [[ $i == 10 ]] && (echo "Fatal Error: The Puppet server has not generated its certificate in a timely manner" && exit 1)
+
+      $NOOP sudo puppet agent --test --waitforcert 30 --logdest /var/log/puppet/agent.log
+      case $? in
+        2)
+          echo "  Successfully updated"
+          ;;
+        4)
+          echo "  Failure while getting updated"
+          exit 1
+          ;;
+        6)
+          echo "  Partially updated"
+          ;;
+      esac
+      echo "  Stopping Puppet Server"
+      stop_service puppetmaster
+    fi
+
+    echo "Installing Puppet DB (This will take a few minutes)"
+    sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppetdb/install.log --debug -e 'include bootstrap'
   fi
-
-  #if [[ -z $(sudo puppet master --configprint hostcert) ]] ; then
-    # This should generate the server certificate as well
-    echo "Generating SSL certificates"
-    echo "  Starting Puppet Server"
-    start_service puppetmaster
-    echo -n "  Waiting for server certificate."
-    i=0
-    while [[ $i < 10 ]] ; do
-      [[ -f /var/lib/puppet/ssl/certs/puppet.pem ]] && break
-      sleep 1
-      echo -n "."
-      ((i++))
-    done
-    echo " "
-    [[ $i == 10 ]] && (echo "Fatal Error: The Puppet server has not generated its certificate in a timely manner" && exit 1)
-
-    $NOOP sudo puppet agent --test --waitforcert 30 --logdest /var/log/puppet/agent.log
-    case $? in
-      2)
-        echo "  Successfully updated"
-        ;;
-      4)
-        echo "  Failure while getting updated"
-        exit 1
-        ;;
-      6)
-        echo "  Partially updated"
-        ;;
-    esac
-    echo "  Stopping Puppet Server"
-    stop_service puppetmaster
-  #fi
-
-  exit 0
-#
-  echo "Installing Puppet DB"
-  sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppetdb/puppetdb-install.log --debug -e 'include bootstrap'
-  
-exit 0
-  # Make sure puppet server is off for a while
-  stop_service puppetmaster
 
   if [[ ! -d /etc/puppet/.git ]]; then
     echo "Cloning puppet configuration"
