@@ -235,7 +235,7 @@ function set_hostname() # {{{
             if [[ -z $(grep DHCP_HOSTNAME $interface_config) ]]; then
               $NOOP echo "DHCP_HOSTNAME=\"$hostname\"" | sudo tee --append $interface_config > /dev/null
             else
-              $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$hostname\"/" $interface_config
+              $NOOP sudo sed -i "/^DHCP_HOSTNAME/s/\".*\"/\"$hostname ${hostname}.localdomain\"/" $interface_config
             fi
           fi
         done
