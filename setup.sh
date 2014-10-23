@@ -331,6 +331,30 @@ elif [[ $ID == 'ubuntu' ]]; then
   fi
 fi
 
+  # Updating puppet.conf for initial configuration
+  (cat << EOD
+[main]
+  logdir = /var/log/puppet
+  rundir = /var/run/puppet
+  ssldir = \$vardir/ssl
+  autoflush = true
+  pluginsync = true
+
+[master]
+  certname = puppet
+  dns_alt_names = puppet,puppet.apac.inin.com,puppet.lab.apac.inin.com,puppet.demo.apac.inin.com,puppet.emea.inin.com 
+  allow_duplicate_certs = true
+  autosign = true
+
+[agent]
+  certname = puppetmaster
+  server = puppet
+  classfile = \$vardir/classes.txt
+  localconfig = \$vardir/localconfig
+EOD
+) | erb -T - | tee /tmp/puppet.conf > /dev/null
+
+  
 exit 0
   # Make sure puppet server is off for a while
   stop_service puppetmaster
