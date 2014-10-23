@@ -366,7 +366,7 @@ EOD
 
   if [[ -z $(puppet module list --modulepath /etc/puppet/modules | grep puppetlabs-puppetdb) ]] ; then
     echo "Installing puppetdb module"
-    sudo puppet --modulepath /etc/puppet/modules module install puppetlabs/puppetdb
+    sudo puppet module install puppetlabs/puppetdb --modulepath /etc/puppet/modules
   fi
 
   if [[ ! -r ${bootstrap_dir}/init.pp ]] ; then
