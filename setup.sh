@@ -331,6 +331,7 @@ elif [[ $ID == 'ubuntu' ]]; then
   fi
 fi
 
+  # This should generate the server certificate as well
   start_service puppetmaster
 
   # Updating puppet.conf for initial configuration
@@ -382,17 +383,20 @@ class bootstrap
     mode  => '0644',
   }
 
-  class { 'puppetdb': }
+  class {'puppetdb': } 
 
-  class { 'puppetdb::master::config':
-    puppetdb_server => 'puppet',
+  class {'puppetdb::master::config':
+    puppetdb_server    => 'puppet',
+    listen_address     => 'puppet',
+    ssl_listen_address => 'puppet',
   }
 }
 EOD
 ) | erb -T - | sudo tee ${bootstrap_dir}/init.pp > /dev/null
   fi
 
-  sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppet/puppet-install.log --debug -e 'include bootstrap'
+  echo "Installing Puppet DB"
+  sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppetdb/puppetdb-install.log --debug -e 'include bootstrap'
   
 exit 0
   # Make sure puppet server is off for a while
