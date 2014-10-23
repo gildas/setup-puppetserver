@@ -280,6 +280,15 @@ function main() # {{{
   update_system
   set_hostname $hostname
 
+if ! has_application vim ; then
+  echo "Installing vim"
+  if [[ $ID == 'centos' ]]; then
+    $NOOP sudo yum install -y --quiet vim
+  elif [[ $ID == 'ubuntu' ]]; then
+    $NOOP sudo apt-get -y -qq install vim
+  fi
+fi
+
 if ! has_application git ; then
   echo "Installing git"
   if [[ $ID == 'centos' ]]; then
@@ -383,12 +392,13 @@ class bootstrap
     mode  => '0644',
   }
 
-  class {'puppetdb': } 
-
-  class {'puppetdb::master::config':
-    puppetdb_server    => 'puppet',
+  class {'puppetdb':
     listen_address     => 'puppet',
     ssl_listen_address => 'puppet',
+  } 
+
+  class {'puppetdb::master::config':
+    puppetdb_server => 'puppet',
   }
 }
 EOD
