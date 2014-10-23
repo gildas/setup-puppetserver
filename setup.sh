@@ -264,7 +264,7 @@ function main() # {{{
   hostname=${1:-puppet}
   environment=${2:-test}
 
-  echo "Installing a puppet server with a hostname of ${hostname} running in the environment: ${environment}"
+  echo "Installing a puppet server on '${hostname}' running in the environment: ${environment}"
   [[ ! -z $NOOP ]] && echo "Running in dry mode (no command will be executed)"
 
   # Loads the distro information
