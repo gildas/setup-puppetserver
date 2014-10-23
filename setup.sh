@@ -340,9 +340,6 @@ elif [[ $ID == 'ubuntu' ]]; then
   fi
 fi
 
-  # This should generate the server certificate as well
-  start_service puppetmaster
-
   # Updating puppet.conf for initial configuration
   if [[ $(md5sum /etc/puppet/puppet.conf | cut -d ' ' -f 1) != '73b7836a03de0dd8ece774a43627fef5' ]]; then
   (cat << EOD
@@ -405,6 +402,41 @@ EOD
 ) | erb -T - | sudo tee ${bootstrap_dir}/init.pp > /dev/null
   fi
 
+  #if [[ -z $(sudo puppet master --configprint hostcert) ]] ; then
+    # This should generate the server certificate as well
+    echo "Generating SSL certificates"
+    echo "  Starting Puppet Server"
+    start_service puppetmaster
+    echo -n "  Waiting for server certificate."
+    i=0
+    while [[ $i < 10 ]] ; do
+      [[ -f /var/lib/puppet/ssl/certs/puppet.pem ]] && break
+      sleep 1
+      echo -n "."
+      ((i++))
+    done
+    echo " "
+    [[ $i == 10 ]] && (echo "Fatal Error: The Puppet server has not generated its certificate in a timely manner" && exit 1)
+
+    $NOOP sudo puppet agent --test --waitforcert 30 --logdest /var/log/puppet/agent.log
+    case $? in
+      2)
+        echo "  Successfully updated"
+        ;;
+      4)
+        echo "  Failure while getting updated"
+        exit 1
+        ;;
+      6)
+        echo "  Partially updated"
+        ;;
+    esac
+    echo "  Stopping Puppet Server"
+    stop_service puppetmaster
+  #fi
+
+  exit 0
+#
   echo "Installing Puppet DB"
   sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppetdb/puppetdb-install.log --debug -e 'include bootstrap'
   
@@ -423,11 +455,6 @@ exit 0
     $NOOP sudo sh -c "cd /etc/puppet && git pull"
     $NOOP sudo chown -R puppet:puppet /etc/puppet
   fi
-
-  echo "Generating SSL certificates"
-  start_service puppetmaster
-  sleep 1
-  stop_service puppetmaster
 
   if [[ $ID == 'centos' ]]; then
     if [[ $VERSION_ID == "7" ]]; then
