@@ -283,7 +283,7 @@ function main() # {{{
 if ! has_application git ; then
   echo "Installing git"
   if [[ $ID == 'centos' ]]; then
-    $NOOP sudo yum install -y git
+    $NOOP sudo yum install -y --quiet git
   elif [[ $ID == 'ubuntu' ]]; then
     $NOOP sudo apt-get -y -qq install git
   fi
@@ -292,7 +292,7 @@ fi
 if [[ $ID == 'centos' ]]; then
   if [[ -z $(rpm -qa | grep ruby) ]]; then
     echo "Installing Ruby"
-    $NOOP sudo yum install -y ruby
+    $NOOP sudo yum install -y --quiet ruby
   fi
 elif [[ $ID == 'ubuntu' ]]; then
   if [[ -z $(dpkg-query -W -f='{Status}' ruby2.1 2>&1 | grep '\s+installed') ]]; then
@@ -314,7 +314,7 @@ if [[ $ID == 'centos' ]]; then
     elif [[ $VERSION_ID == "6" ]]; then
       $NOOP sudo rpm -ivh http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm
     fi
-    $NOOP sudo yum install -y puppet-server
+    $NOOP sudo yum install -y --quiet puppet-server
   fi
 elif [[ $ID == 'ubuntu' ]]; then
   if [[ -z $(dpkg-query -W -f='{Status}' puppetmaster 2>&1 | grep '\s+installed') ]]; then
