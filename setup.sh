@@ -443,10 +443,10 @@ EOD
 
   if [[ -d /var/lib/hiera/${environment} ]]; then
     echo "Updating ${environment} environment via r10k"
-    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment ${environment} 2>&1 | tee -a /var/log/puppet/r10k-${environment}.log"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment ${environment} --puppetfile 2>&1 | tee -a /var/log/puppet/r10k-${environment}.log"
   else
     echo "Installing ${environment} environment via r10k"
-    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment ${environment} 2>&1 | tee -a /var/log/puppet/r10k-${environment}.log"
+    $NOOP sudo sh -c "/usr/local/bin/r10k -v debug deploy environment ${environment} --puppetfile 2>&1 | tee -a /var/log/puppet/r10k-${environment}.log"
   fi
 
 #  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
