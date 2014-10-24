@@ -25,6 +25,11 @@ function verbose() # {{{
   [[ ${VERBOSE:-0} -eq 0 ]] || printf "$*\n";
 } # }}}
 
+function warning() # {{{
+{
+  echo "$@"
+} # }}}
+
 function error() # {{{
 {
   echo >&2 "$@"
@@ -70,6 +75,16 @@ function compare_versions () # {{{
 function has_application() # {{{
 {
   command -v "$@" > /dev/null 2>&1
+} # }}}
+
+function has_package() # {{{
+{
+  package=$1
+  if [[ $ID == 'centos' ]]; then
+    [[ ! -z $(rpm -qa | grep "^${package}-") ]]
+  elif [[ $ID == 'ubuntu' ]]; then
+    [[ ! -z $(dpkg-query -W -f='{Status}' ${package} 2>&1 | grep '\s+installed') ]]
+  fi
 } # }}}
 
 function install_package() # {{{
@@ -259,6 +274,77 @@ function set_hostname() # {{{
   fi
 } # }}}
 
+function delete_certificates() # {{{
+{
+  if ! has_application puppet ; then
+    return 0
+  fi
+  ssl_dir=$(puppet config print ssldir --section master)
+  if [[ -z $ssl_dir ]] ; then
+    return 0
+  fi
+
+  if [[ -d $ssl_dir ]] ; then
+    verbose "Deleting Puppet's certificates"
+    $NOOP sudo rm -rf $ssl_dir
+  fi
+
+  if has_package puppetdb ; then
+    # TODO: Discover where puppetdb's ssl is stored
+    verbose "Deleting PuppetDB's certificates"
+    $NOOP sudo rm -rf /etc/puppetdb/ssl
+  fi
+} # }}}
+
+function generate_certificates() # {{{
+{
+  if ! has_application puppet ; then
+    error "Puppet is not installed!"
+    return 1
+  fi
+
+  if [[ -z $(sudo puppet master --configprint hostcert) ]] ; then # {{{2
+    # This should generate the server certificate as well
+    verbose "Generating SSL certificates"
+    verbose "  Generating the CA"
+    $NOOP sudo puppet cert list -a
+    verbose "  Starting Puppet Server"
+    start_service puppetmaster
+    echo -n "  Waiting for server certificate."
+    i=0
+    while [[ $i < 10 ]] ; do
+      [[ -f /var/lib/puppet/ssl/certs/puppet.pem ]] && break
+      sleep 1
+      echo -n "."
+      ((i++))
+    done
+    echo " "
+    [[ $i == 10 ]] && (echo "Fatal Error: The Puppet server has not generated its certificate in a timely manner" && exit 1)
+
+    $NOOP sudo puppet agent --test --waitforcert 30 --logdest /var/log/puppet/agent.log
+    case $? in
+      2)
+        verbose "  Successfully updated"
+        ;;
+      4)
+        error "  Failure while getting updated"
+        exit 1
+        ;;
+      6)
+        warning "  Partially updated"
+        ;;
+    esac
+    verbose "  Stopping Puppet Server"
+    stop_service puppetmaster
+  fi # 2}}}
+
+  if has_package puppetdb ; then
+    # TODO: Discover where puppetdb's ssl is stored
+    verbose "Importing certificates into Puppet DB"
+    $NOOP sudo /usr/sbin/puppetdb ssl-setup
+  fi
+} # }}}
+
 function main() # {{{
 {
   hostname=${1:-puppet}
@@ -403,38 +489,7 @@ EOD
 ) | erb -T - | sudo tee ${bootstrap_dir}/init.pp > /dev/null
     fi
 
-    if [[ -z $(sudo puppet master --configprint hostcert) ]] ; then
-      # This should generate the server certificate as well
-      echo "Generating SSL certificates"
-      echo "  Starting Puppet Server"
-      start_service puppetmaster
-      echo -n "  Waiting for server certificate."
-      i=0
-      while [[ $i < 10 ]] ; do
-        [[ -f /var/lib/puppet/ssl/certs/puppet.pem ]] && break
-        sleep 1
-        echo -n "."
-        ((i++))
-      done
-      echo " "
-      [[ $i == 10 ]] && (echo "Fatal Error: The Puppet server has not generated its certificate in a timely manner" && exit 1)
-
-      $NOOP sudo puppet agent --test --waitforcert 30 --logdest /var/log/puppet/agent.log
-      case $? in
-        2)
-          echo "  Successfully updated"
-          ;;
-        4)
-          echo "  Failure while getting updated"
-          exit 1
-          ;;
-        6)
-          echo "  Partially updated"
-          ;;
-      esac
-      echo "  Stopping Puppet Server"
-      stop_service puppetmaster
-    fi
+    generate_certificates
 
     echo "Installing Puppet DB (This will take a few minutes)"
     sudo puppet apply --modulepath /etc/puppet/modules --logdest /var/log/puppetdb/install.log --debug -e 'include bootstrap'
@@ -550,9 +605,17 @@ EOD
 
 #  $NOOP sudo chown -R puppet:puppet /var/lib/puppet/clientbucket /var/lib/puppet/client_data /var/lib/puppet/client_yaml /var/lib/puppet/facts.d /var/lib/puppet/lib
 
+  stop_service    puppet
+  stop_service    puppetdb
+  stop_service    puppetmaster
+  stop_service    httpd
+
+  delete_certificates
+  generate_certificates
+
   disable_service puppetmaster
   enable_service  httpd
-  stop_service    puppetmaster
+  start_service   puppetdb
   start_service   httpd
 
   verbose "Enabling and Starting Puppet agent"
